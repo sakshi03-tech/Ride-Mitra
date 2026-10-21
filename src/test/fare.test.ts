@@ -9,7 +9,7 @@ describe("Fare Calculation Rules (Corridor Pricing Matrix)", () => {
         f.to_stop === "11111111-1111-1111-1111-111111111102"
     );
     expect(fare).toBeDefined();
-    expect(fare?.base_fare).toBe(60);
+    expect(fare?.base_fare).toBe(30); // ₹30 as per wireframe specification
   });
 
   it("calculates per-seat fare for shared rides accurately", () => {
@@ -35,9 +35,9 @@ describe("Fare Calculation Rules (Corridor Pricing Matrix)", () => {
         f.to_stop === "11111111-1111-1111-1111-111111111103"
     );
     expect(fare).toBeDefined();
-    expect(fare?.base_fare).toBe(70);
+    expect(fare?.base_fare).toBe(40);
     expect(fare?.night_surcharge).toBe(15);
     const nightTotal = (fare?.base_fare || 0) + (fare?.night_surcharge || 0);
-    expect(nightTotal).toBe(85);
+    expect(nightTotal).toBe(55);
   });
 });
