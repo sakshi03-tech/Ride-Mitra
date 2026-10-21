@@ -152,7 +152,7 @@ export const initialProfiles: Profile[] = [
   {
     id: "student-1",
     role: "student",
-    full_name: "Rahul Sisode",
+    full_name: "Student",
     phone: "9123456789",
     language: "mr",
     is_blocked: false,

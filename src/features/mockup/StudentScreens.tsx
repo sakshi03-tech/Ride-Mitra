@@ -59,11 +59,11 @@ export const StudentScreens: React.FC = () => {
   // Screen 2 Auth states
   const [authTab, setAuthTab] = useState<"login" | "signup">("login");
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
-  const [email, setEmail] = useState("rahul.sisode@git.edu");
-  const [password, setPassword] = useState("pass1234");
-  const [fullName, setFullName] = useState("Rahul Sisode");
-  const [phone, setPhone] = useState("9123456789");
-  const [otp, setOtp] = useState("123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpMessage, setOtpMessage] = useState<string | null>(null);
 
@@ -277,7 +277,7 @@ export const StudentScreens: React.FC = () => {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Rahul Sisode"
+                  placeholder="Enter your full name"
                   className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -292,7 +292,7 @@ export const StudentScreens: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="rahul.sisode@git.edu"
+                  placeholder="name@git.edu"
                   className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -341,7 +341,7 @@ export const StudentScreens: React.FC = () => {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    placeholder="9123456789"
+                    placeholder="Enter 10-digit mobile number"
                     className="w-full h-11 pl-12 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider"
                   />
                 </div>
@@ -379,7 +379,7 @@ export const StudentScreens: React.FC = () => {
                   required
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.slice(0, 6))}
-                  placeholder="123456"
+                  placeholder="Enter 6-digit OTP"
                   className="w-full h-12 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-center text-xl font-mono font-black tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-[11px] text-emerald-600 font-semibold mt-1">✓ Verification code: 123456</p>
@@ -443,7 +443,7 @@ export const StudentScreens: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-blue-100">Good Morning,</p>
               <h2 className="text-xl font-extrabold flex items-center gap-1">
-                {currentUser?.fullName?.split(" ")[0] || "Rahul"} <span className="text-base">👋</span>
+                {currentUser?.fullName?.split(" ")[0] || "Student"} <span className="text-base">👋</span>
               </h2>
             </div>
             <img
@@ -1268,9 +1268,9 @@ export const StudentScreens: React.FC = () => {
               className="w-12 h-12 rounded-full object-cover border"
             />
             <div>
-              <h4 className="font-extrabold text-sm">{currentUser?.fullName || "Rahul Sisode"}</h4>
-              <p className="text-xs text-zinc-500">Student • GIT</p>
-              <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{currentUser?.email || currentUser?.phone || "+91 91234 56789"}</p>
+              <h4 className="font-extrabold text-sm">{currentUser?.fullName || "Student Profile"}</h4>
+              <p className="text-xs text-zinc-500">Student • GIT Campus</p>
+              <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{currentUser?.email || currentUser?.phone || "Lavel Corridor"}</p>
             </div>
           </div>
 

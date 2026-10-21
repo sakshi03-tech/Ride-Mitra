@@ -50,18 +50,18 @@ export const DriverScreens: React.FC = () => {
   // Screen 2 tabs & auth state
   const [driverAuthTab, setDriverAuthTab] = useState<"login" | "signup">("login");
   const [driverAuthMethod, setDriverAuthMethod] = useState<"phone" | "email">("phone");
-  const [driverMobile, setDriverMobile] = useState("9876543210");
-  const [driverEmail, setDriverEmail] = useState("suresh.patil@ridemitra.com");
-  const [driverPassword, setDriverPassword] = useState("pass1234");
-  const [driverOtp, setDriverOtp] = useState("123456");
+  const [driverMobile, setDriverMobile] = useState("");
+  const [driverEmail, setDriverEmail] = useState("");
+  const [driverPassword, setDriverPassword] = useState("");
+  const [driverOtp, setDriverOtp] = useState("");
   const [driverOtpSent, setDriverOtpSent] = useState(false);
   const [driverOtpMessage, setDriverOtpMessage] = useState<string | null>(null);
 
   // Screen 3 registration fields
-  const [regName, setRegName] = useState("Suresh Patil");
-  const [regPhone, setRegPhone] = useState("9876543210");
-  const [regAuto, setRegAuto] = useState("MH 08 AB 1234");
-  const [regLicense, setRegLicense] = useState("MH08 20190012345");
+  const [regName, setRegName] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regAuto, setRegAuto] = useState("");
+  const [regLicense, setRegLicense] = useState("");
   const [rcFileName, setRcFileName] = useState("rc_book_scan.jpg");
 
   // Screen 8 earnings tab
@@ -80,12 +80,12 @@ export const DriverScreens: React.FC = () => {
   const handleVerifyDriverOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    const success = await loginWithPhoneOtp(driverMobile, driverOtp, "driver", "Suresh Patil");
+    const success = await loginWithPhoneOtp(driverMobile, driverOtp, "driver", "Auto Driver");
     if (success) {
       setTrip((prev) => ({
         ...prev,
-        driverName: "Suresh Patil",
-        driverAuto: "MH 08 AB 1234 • Bajaj RE",
+        driverName: prev.driverName || "Auto Driver",
+        driverAuto: prev.driverAuto || "MH 08 AB 1234 • Bajaj RE",
       }));
       setDriverScreen(4); // Driver Dashboard
     }
@@ -96,23 +96,20 @@ export const DriverScreens: React.FC = () => {
     setAuthError(null);
     const success = await loginWithEmail(driverEmail, driverPassword, "driver");
     if (success) {
-      setTrip((prev) => ({
-        ...prev,
-        driverName: "Suresh Patil",
-        driverAuto: "MH 08 AB 1234 • Bajaj RE",
-      }));
       setDriverScreen(4); // Driver Dashboard
     }
   };
 
   const handleDriverRegistration = (e: React.FormEvent) => {
     e.preventDefault();
+    const name = regName.trim() || "Auto Driver";
+    const auto = regAuto.trim() || "MH 08 AB 1234";
     setTrip((prev) => ({
       ...prev,
-      driverName: regName || "Suresh Patil",
-      driverAuto: `${regAuto || "MH 08 AB 1234"} • Bajaj RE`,
+      driverName: name,
+      driverAuto: `${auto} • Bajaj RE`,
     }));
-    loginWithPhoneOtp(regPhone, "123456", "driver", regName);
+    loginWithPhoneOtp(regPhone, "123456", "driver", name);
     setDriverScreen(4);
   };
 
@@ -284,7 +281,7 @@ export const DriverScreens: React.FC = () => {
                     required
                     value={driverMobile}
                     onChange={(e) => setDriverMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    placeholder="9876543210"
+                    placeholder="Enter 10-digit mobile number"
                     className="w-full h-11 pl-12 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono tracking-wider"
                   />
                 </div>
@@ -323,7 +320,7 @@ export const DriverScreens: React.FC = () => {
                   required
                   value={driverOtp}
                   onChange={(e) => setDriverOtp(e.target.value)}
-                  placeholder="123456"
+                  placeholder="Enter 6-digit OTP"
                   className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-center font-mono text-base font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -349,7 +346,7 @@ export const DriverScreens: React.FC = () => {
                   required
                   value={driverEmail}
                   onChange={(e) => setDriverEmail(e.target.value)}
-                  placeholder="suresh.patil@ridemitra.com"
+                  placeholder="driver@ridemitra.com"
                   className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -364,7 +361,7 @@ export const DriverScreens: React.FC = () => {
                   required
                   value={driverPassword}
                   onChange={(e) => setDriverPassword(e.target.value)}
-                  placeholder="Password"
+                  placeholder="Enter password"
                   className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -426,6 +423,7 @@ export const DriverScreens: React.FC = () => {
               required
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
+              placeholder="Enter your full name"
               className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -433,11 +431,12 @@ export const DriverScreens: React.FC = () => {
           <div>
             <label className="text-[11px] font-bold text-zinc-500 block mb-1">Mobile Number (मोबाईल नंबर)</label>
             <input
-              type="text"
+              type="tel"
               required
               value={regPhone}
-              onChange={(e) => setRegPhone(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
+              onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+              placeholder="Enter 10-digit mobile number"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
             />
           </div>
 
@@ -448,6 +447,7 @@ export const DriverScreens: React.FC = () => {
               required
               value={regAuto}
               onChange={(e) => setRegAuto(e.target.value)}
+              placeholder="e.g. MH 08 AB 1234"
               className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -459,6 +459,7 @@ export const DriverScreens: React.FC = () => {
               required
               value={regLicense}
               onChange={(e) => setRegLicense(e.target.value)}
+              placeholder="e.g. MH08 20210012345"
               className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -716,12 +717,12 @@ export const DriverScreens: React.FC = () => {
                 <span className="text-[10px] text-zinc-400 block font-bold uppercase">
                   Contact Student
                 </span>
-                <h4 className="font-extrabold text-sm">Rahul Sisode</h4>
+                <h4 className="font-extrabold text-sm">{trip.passengerName || "Student Passenger"}</h4>
               </div>
 
               <div className="flex items-center gap-2">
                 <a
-                  href="tel:9123456789"
+                  href={`tel:${trip.passengerPhone || "9876543210"}`}
                   className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"
                 >
                   <Phone className="w-4 h-4" />

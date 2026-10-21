@@ -22,6 +22,8 @@ export interface TripData {
   driverRating: number;
   driverAuto: string;
   driverPhoto: string;
+  passengerName?: string;
+  passengerPhone?: string;
 }
 
 interface MockupContextType {
@@ -72,6 +74,8 @@ const defaultTrip: TripData = {
   driverRating: 4.8,
   driverAuto: "MH 08 AB 1234 • Bajaj RE",
   driverPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  passengerName: "Student Passenger",
+  passengerPhone: "+91 98765 43210",
 };
 
 const MockupContext = createContext<MockupContextType | undefined>(undefined);
@@ -93,17 +97,11 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [ratingComment, setRatingComment] = useState<string>("");
   const [deviceView, setDeviceView] = useState<"mobile" | "responsive">("mobile");
 
-  // Real Auth state
+  // Real Auth state (User-driven, no forced hardcoded names)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem("ride_mitra_auth_user");
-      return saved ? JSON.parse(saved) : {
-        id: "student-rahul",
-        fullName: "Rahul Sisode",
-        email: "rahul.sisode@git.edu",
-        phone: "+91 91234 56789",
-        role: "student",
-      };
+      return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
@@ -187,26 +185,38 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // 3. Authenticate and persist session
+      const userFullName = email.includes("@")
+        ? email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)
+        : (role === "student" ? "Student User" : "Auto Driver");
       const userObj: UserProfile = {
         id: (role === "student" ? "student-" : "driver-") + Date.now(),
         email,
-        fullName: role === "student" ? (email.includes("rahul") ? "Rahul Sisode" : email.split("@")[0]) : "Suresh Patil",
+        fullName: userFullName,
         role,
       };
       setCurrentUser(userObj);
       localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+      if (role === "student") {
+        setTrip((prev) => ({ ...prev, passengerName: userFullName }));
+      }
       setAuthLoading(false);
       return true;
     } catch (err: any) {
       console.warn("Email login fallback:", err);
+      const userFullName = email.includes("@")
+        ? email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)
+        : (role === "student" ? "Student User" : "Auto Driver");
       const userObj: UserProfile = {
         id: (role === "student" ? "student-" : "driver-") + Date.now(),
         email,
-        fullName: role === "student" ? "Rahul Sisode" : "Suresh Patil",
+        fullName: userFullName,
         role,
       };
       setCurrentUser(userObj);
       localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+      if (role === "student") {
+        setTrip((prev) => ({ ...prev, passengerName: userFullName }));
+      }
       setAuthLoading(false);
       return true;
     }
@@ -228,26 +238,34 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       });
 
+      const userFullName = fullName || (email.includes("@") ? email.split("@")[0] : (role === "student" ? "Student User" : "Auto Driver"));
       const userObj: UserProfile = {
         id: data?.user?.id || (role === "student" ? "student-" : "driver-") + Date.now(),
         email,
-        fullName,
+        fullName: userFullName,
         role,
       };
       setCurrentUser(userObj);
       localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+      if (role === "student") {
+        setTrip((prev) => ({ ...prev, passengerName: userFullName }));
+      }
       setAuthLoading(false);
       return true;
     } catch (err: any) {
       console.warn("Sign up fallback:", err);
+      const userFullName = fullName || (email.includes("@") ? email.split("@")[0] : (role === "student" ? "Student User" : "Auto Driver"));
       const userObj: UserProfile = {
         id: (role === "student" ? "student-" : "driver-") + Date.now(),
         email,
-        fullName,
+        fullName: userFullName,
         role,
       };
       setCurrentUser(userObj);
       localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+      if (role === "student") {
+        setTrip((prev) => ({ ...prev, passengerName: userFullName }));
+      }
       setAuthLoading(false);
       return true;
     }
@@ -276,14 +294,18 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Allow valid 6-digit OTP or standard 123456 code
       const cleanOtp = otp ? otp.trim() : "";
       if (cleanOtp.length >= 4 || cleanOtp === "123456" || cleanOtp === "") {
+        const userFullName = fullName && fullName.trim().length > 0 ? fullName : (role === "student" ? "Student" : "Auto Driver");
         const userObj: UserProfile = {
           id: (role === "student" ? "student-phone-" : "driver-phone-") + Date.now(),
           phone,
-          fullName: fullName || (role === "student" ? "Rahul Sisode" : "Suresh Patil"),
+          fullName: userFullName,
           role,
         };
         setCurrentUser(userObj);
         localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+        if (role === "student") {
+          setTrip((prev) => ({ ...prev, passengerName: userFullName, passengerPhone: phone }));
+        }
         setAuthLoading(false);
         return true;
       }

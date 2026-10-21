@@ -15,7 +15,7 @@ export const ChatModal: React.FC = () => {
     setInputText("");
   };
 
-  const partnerName = flow === "student" ? trip.driverName : "Rahul Sisode";
+  const partnerName = flow === "student" ? trip.driverName : (trip.passengerName || "Student Passenger");
 
   return (
     <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end animate-in fade-in">

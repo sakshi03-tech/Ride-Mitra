@@ -98,7 +98,7 @@ export const LoginPage: React.FC = () => {
             }}
             className="text-xs font-bold py-1.5 px-2 bg-white dark:bg-zinc-800 border rounded-lg hover:border-rickshaw-500 text-left transition shadow-sm"
           >
-            🎓 विद्यार्थी (Rahul)
+            🎓 विद्यार्थी (Student)
           </button>
           <button
             type="button"
