@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "android:sync": "npm run build && npx cap sync android",
-    "android:open": "npx cap open android"
+    "android:open": "npx cap open android",
+    "android:build": "export JAVA_HOME=/opt/homebrew/Cellar/openjdk@21/21.0.10/libexec/openjdk.jdk/Contents/Home && npm run android:sync && cd android && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../RideMitra.apk",
+    "android:run": "adb install -r RideMitra.apk && adb shell monkey -p com.ridemitra.app -c android.intent.category.LAUNCHER 1"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
