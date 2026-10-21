@@ -152,3 +152,4 @@ supabase functions deploy sos-notify
 - [वापरकर्ता मार्गदर्शिका (Marathi Guide)](docs/USER_GUIDE_MR.md)
 - [User Guide (English)](docs/USER_GUIDE_EN.md)
 - [Final Year Presentation Demo Script](docs/DEMO_SCRIPT.md)
+# Ride-Mitra
