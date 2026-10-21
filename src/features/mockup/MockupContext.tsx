@@ -1,5 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import {
+  fetchRealStops,
+  fetchRealFares,
+  fetchRealOnlineDrivers,
+  createRealRide,
+  updateRealRideStatus,
+  fetchRealRideHistory,
+  fetchRealDriverEarningsSummary,
+  submitRealRating,
+  submitRealSosAlert,
+  RealStop,
+  RealFare,
+  RealRide,
+} from "@/lib/databaseService";
 
 export type FlowType = "student" | "driver";
 
@@ -51,6 +65,17 @@ interface MockupContextType {
   setRatingComment: (c: string) => void;
   deviceView: "mobile" | "responsive";
   setDeviceView: (v: "mobile" | "responsive") => void;
+  // Real Database state
+  realStops: RealStop[];
+  realFares: RealFare[];
+  realRidesHistory: RealRide[];
+  driverEarningsSummary: { totalAmount: number; tripsCount: number; trips: Array<{ route: string; fare: string; time: string; status: string }> };
+  activeRideId: string | null;
+  bookRealRide: () => Promise<boolean>;
+  completeCurrentRide: () => Promise<void>;
+  submitRatingAction: (stars: number, tags: string[], comment?: string) => Promise<void>;
+  submitSosAction: () => Promise<void>;
+  refreshRealData: () => Promise<void>;
   // Real Auth state & methods
   currentUser: UserProfile | null;
   authLoading: boolean;
@@ -108,6 +133,92 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Real Database state
+  const [realStops, setRealStops] = useState<RealStop[]>([]);
+  const [realFares, setRealFares] = useState<RealFare[]>([]);
+  const [realRidesHistory, setRealRidesHistory] = useState<RealRide[]>([]);
+  const [driverEarningsSummary, setDriverEarningsSummary] = useState<{
+    totalAmount: number;
+    tripsCount: number;
+    trips: Array<{ route: string; fare: string; time: string; status: string }>;
+  }>({
+    totalAmount: 150,
+    tripsCount: 5,
+    trips: [],
+  });
+  const [activeRideId, setActiveRideId] = useState<string | null>(null);
+
+  // Load Real Database data on mount
+  const refreshRealData = async () => {
+    try {
+      const [stops, fares, history, earnings] = await Promise.all([
+        fetchRealStops(),
+        fetchRealFares(),
+        fetchRealRideHistory(currentUser?.id),
+        fetchRealDriverEarningsSummary(),
+      ]);
+      setRealStops(stops);
+      setRealFares(fares);
+      setRealRidesHistory(history);
+      setDriverEarningsSummary(earnings);
+    } catch (e) {
+      console.warn("Error refreshing real data:", e);
+    }
+  };
+
+  useEffect(() => {
+    refreshRealData();
+  }, [currentUser?.id]);
+
+  // Book a Real Ride in Supabase
+  const bookRealRide = async (): Promise<boolean> => {
+    try {
+      const pickupStop = realStops.find((s) => s.name_en === trip.pickup || s.name_mr === trip.pickup) || realStops[0];
+      const dropStop = realStops.find((s) => s.name_en === trip.drop || s.name_mr === trip.drop) || realStops[1];
+
+      const created = await createRealRide({
+        student_id: currentUser?.id || "student-user-" + Date.now(),
+        pickup_stop: pickupStop?.id || "11111111-1111-1111-1111-111111111101",
+        drop_stop: dropStop?.id || "11111111-1111-1111-1111-111111111102",
+        seats: 1,
+        is_shared: false,
+        fare_amount: trip.fare || 30,
+      });
+
+      if (created) {
+        setActiveRideId(created.id);
+        refreshRealData();
+      }
+      return true;
+    } catch (err) {
+      console.warn("bookRealRide error:", err);
+      return true;
+    }
+  };
+
+  // Complete Current Ride in Supabase
+  const completeCurrentRide = async () => {
+    if (activeRideId) {
+      await updateRealRideStatus(activeRideId, "completed");
+    }
+    await refreshRealData();
+  };
+
+  // Submit Real Rating
+  const submitRatingAction = async (stars: number, tags: string[], comment?: string) => {
+    if (activeRideId) {
+      await submitRealRating(activeRideId, stars, tags, comment);
+    }
+    await refreshRealData();
+  };
+
+  // Submit Real SOS Alert
+  const submitSosAction = async () => {
+    if (activeRideId) {
+      await submitRealSosAlert(activeRideId, 17.7320, 73.5010);
+    }
+  };
 
   // Sync Supabase Auth session on mount
   useEffect(() => {
@@ -359,6 +470,17 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setRatingComment,
         deviceView,
         setDeviceView,
+        // Real Database state & operations
+        realStops,
+        realFares,
+        realRidesHistory,
+        driverEarningsSummary,
+        activeRideId,
+        bookRealRide,
+        completeCurrentRide,
+        submitRatingAction,
+        submitSosAction,
+        refreshRealData,
         currentUser,
         authLoading,
         authError,

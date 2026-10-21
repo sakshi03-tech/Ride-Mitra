@@ -54,6 +54,13 @@ export const StudentScreens: React.FC = () => {
     loginWithPhoneOtp,
     sendPhoneOtp,
     logout,
+    // Real Supabase data & functions
+    realStops,
+    realFares,
+    realRidesHistory,
+    bookRealRide,
+    submitRatingAction,
+    submitSosAction,
   } = useMockup();
 
   // Screen 2 Auth states
@@ -745,7 +752,10 @@ export const StudentScreens: React.FC = () => {
         {/* Bottom Button */}
         <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
           <button
-            onClick={() => setStudentScreen(6)}
+            onClick={async () => {
+              await bookRealRide();
+              setStudentScreen(6);
+            }}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
           >
             Confirm Booking
@@ -1145,7 +1155,10 @@ export const StudentScreens: React.FC = () => {
 
         <div className="pt-4">
           <button
-            onClick={() => setStudentScreen(11)}
+            onClick={async () => {
+              await submitRatingAction(selectedRating, ratingTags, ratingComment);
+              setStudentScreen(11);
+            }}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition"
           >
             Submit Rating
@@ -1191,58 +1204,47 @@ export const StudentScreens: React.FC = () => {
 
         {/* List */}
         <div className="p-4 space-y-3 flex-1 overflow-y-auto">
-          {[
-            {
-              route: "Lavel ➔ GIT",
-              fare: "₹30",
-              date: "21 Oct 2026 • 09:15 AM",
-              driver: "Suresh Patil",
-              rating: 4.8,
-              photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
-            },
-            {
-              route: "GIT ➔ Lavel",
-              fare: "₹30",
-              date: "20 Oct 2026 • 05:30 PM",
-              driver: "Prakash Mane",
-              rating: 4.6,
-              photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
-            },
-            {
-              route: "Lavel ➔ GIT",
-              fare: "₹30",
-              date: "19 Oct 2026 • 09:10 AM",
-              driver: "Ramesh Jadhav",
-              rating: 4.7,
-              photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
-            },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">{item.route}</span>
-                <span className="font-black text-sm text-blue-600">{item.fare}</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 font-medium">{item.date}</p>
-
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <img src={item.photo} alt={item.driver} className="w-7 h-7 rounded-full object-cover" />
-                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{item.driver}</span>
-                  <span className="text-[10px] text-amber-500 font-bold">★ {item.rating}</span>
-                </div>
-
-                <button
-                  onClick={() => setStudentScreen(4)}
-                  className="px-3 py-1 rounded-lg border border-blue-600 text-blue-600 font-bold text-xs hover:bg-blue-50"
-                >
-                  Rebook
-                </button>
-              </div>
+          {realRidesHistory.length === 0 ? (
+            <div className="text-center py-12 text-zinc-400 text-xs">
+              कोणतीही बुकिंग आढळली नाही (No bookings found yet)
             </div>
-          ))}
+          ) : (
+            realRidesHistory.map((item, idx) => (
+              <div
+                key={item.id || idx}
+                className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">
+                    {item.pickup_name || "Lavel Stop"} ➔ {item.drop_name || "GIT College"}
+                  </span>
+                  <span className="font-black text-sm text-blue-600">₹{item.fare_amount || 30}</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-medium">
+                  {new Date(item.requested_at).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} • {new Date(item.requested_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </p>
+
+                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-xs">
+                      🛺
+                    </span>
+                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      {item.driver_name || "Suresh Patil"}
+                    </span>
+                    <span className="text-[10px] text-amber-500 font-bold">★ 4.8</span>
+                  </div>
+
+                  <button
+                    onClick={() => setStudentScreen(4)}
+                    className="px-3 py-1 rounded-lg border border-blue-600 text-blue-600 font-bold text-xs hover:bg-blue-50"
+                  >
+                    Rebook
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     );

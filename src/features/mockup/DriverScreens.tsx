@@ -45,6 +45,8 @@ export const DriverScreens: React.FC = () => {
     loginWithPhoneOtp,
     sendPhoneOtp,
     logout,
+    completeCurrentRide,
+    driverEarningsSummary,
   } = useMockup();
 
   // Screen 2 tabs & auth state
@@ -760,7 +762,10 @@ export const DriverScreens: React.FC = () => {
 
           {driverOnTripStep === "complete_trip" && (
             <button
-              onClick={() => setDriverScreen(7)}
+              onClick={async () => {
+                await completeCurrentRide();
+                setDriverScreen(7);
+              }}
               className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm shadow-md transition"
             >
               Complete Trip
@@ -892,11 +897,11 @@ export const DriverScreens: React.FC = () => {
           <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
             <div>
               <span className="text-[10px] text-zinc-400 font-bold uppercase">Total Earnings</span>
-              <h2 className="text-3xl font-black text-orange-500 mt-0.5">₹150</h2>
+              <h2 className="text-3xl font-black text-orange-500 mt-0.5">₹{driverEarningsSummary.totalAmount}</h2>
             </div>
             <div className="text-right">
               <span className="px-3 py-1 bg-orange-100 text-orange-700 font-black text-xs rounded-full">
-                5 rides
+                {driverEarningsSummary.tripsCount} rides
               </span>
             </div>
           </div>
@@ -904,13 +909,7 @@ export const DriverScreens: React.FC = () => {
 
         {/* Trip List */}
         <div className="p-4 space-y-2.5 flex-1 overflow-y-auto">
-          {[
-            { route: "Lavel ➔ GIT", fare: "₹30", time: "09:15 AM" },
-            { route: "GIT ➔ Lavel", fare: "₹30", time: "08:45 AM" },
-            { route: "Lavel ➔ GIT", fare: "₹30", time: "08:10 AM" },
-            { route: "GIT ➔ Lavel", fare: "₹30", time: "07:35 AM" },
-            { route: "Lavel ➔ Hostel", fare: "₹30", time: "07:05 AM" },
-          ].map((item, idx) => (
+          {driverEarningsSummary.trips.map((item, idx) => (
             <div
               key={idx}
               className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm"

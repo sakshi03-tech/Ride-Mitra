@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Stop, Fare, Ride, RideOffer, Driver, Profile } from "@/types/database";
 import { getDemoDB, saveDemoDB, initialStops, initialFares } from "@/lib/supabase";
+import { fetchRealStops, fetchRealFares, createRealRide, updateRealRideStatus } from "@/lib/databaseService";
 import { useAuth } from "@/features/auth/AuthContext";
 
 interface BookingContextType {
@@ -48,6 +49,13 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const db = getDemoDB();
     setStops(db.stops);
     setFares(db.fares);
+
+    fetchRealStops().then((real) => {
+      if (real && real.length > 0) setStops(real as any);
+    });
+    fetchRealFares().then((real) => {
+      if (real && real.length > 0) setFares(real as any);
+    });
 
     if (user?.id) {
       const userRides = db.rides.filter((r) => r.student_id === user.id);
@@ -141,6 +149,14 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const chosenDriver = eligibleDrivers[0];
 
     db.rides.push(newRide);
+    createRealRide({
+      student_id: user.id,
+      pickup_stop: pickupStopId,
+      drop_stop: dropStopId,
+      seats,
+      is_shared: isShared,
+      fare_amount: calculatedFare,
+    });
 
     if (chosenDriver) {
       // Create offer for this driver (30s expiry)
@@ -185,6 +201,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ride.cancelled_by = user?.id;
       ride.cancel_reason = reason || "प्रवाशाने रद्द केले";
       ride.updated_at = new Date().toISOString();
+      updateRealRideStatus(activeRide.id, "cancelled");
 
       // Expire offers
       db.offers.forEach((o) => {

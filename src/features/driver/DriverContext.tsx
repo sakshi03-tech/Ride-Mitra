@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Driver, Ride, RideOffer, Stop, Profile } from "@/types/database";
 import { getDemoDB, saveDemoDB } from "@/lib/supabase";
+import { updateRealRideStatus } from "@/lib/databaseService";
 import { useAuth } from "@/features/auth/AuthContext";
 import { soundService } from "@/lib/sound";
 
@@ -306,6 +307,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (ride) {
       ride.status = "arriving";
       ride.updated_at = new Date().toISOString();
+      updateRealRideStatus(activeTrip.id, "arriving");
       saveDemoDB(db);
       loadDriverState();
       return { success: true };
@@ -321,6 +323,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ride.status = "on_trip";
       ride.started_at = new Date().toISOString();
       ride.updated_at = new Date().toISOString();
+      updateRealRideStatus(activeTrip.id, "on_trip");
       saveDemoDB(db);
       loadDriverState();
       return { success: true };
@@ -336,6 +339,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ride.status = "completed";
       ride.completed_at = new Date().toISOString();
       ride.updated_at = new Date().toISOString();
+      updateRealRideStatus(activeTrip.id, "completed");
 
       // Update driver trips & cycle to back of queue
       const d = db.drivers.find((drv) => drv.profile_id === user.id);
