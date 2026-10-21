@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { InteractiveApp } from "@/features/mockup/InteractiveApp";
 import { LandingPage } from "@/features/landing/LandingPage";
 import { DriverPitchPage } from "@/features/landing/DriverPitchPage";
 import { QrPosterPage } from "@/features/landing/QrPosterPage";
@@ -15,8 +16,11 @@ import { AdminDashboardPage } from "@/features/admin/AdminDashboardPage";
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public Pages */}
-      <Route path="/" element={<LandingPage />} />
+      {/* Exact UI from uploaded specification */}
+      <Route path="/" element={<InteractiveApp />} />
+
+      {/* Alternate Public & Portal Pages */}
+      <Route path="/portal" element={<LandingPage />} />
       <Route path="/drivers" element={<DriverPitchPage />} />
       <Route path="/poster" element={<QrPosterPage />} />
       <Route path="/login" element={<LoginPage />} />
