@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMockup } from "./MockupContext";
-import { Wifi, Battery, Signal, Home, Calendar, HelpCircle, User, Smartphone, Maximize2 } from "lucide-react";
+import { Home, Calendar, HelpCircle, User, SlidersHorizontal, X } from "lucide-react";
 
 interface MobileShellProps {
   children: React.ReactNode;
@@ -15,7 +15,8 @@ export const MobileShell: React.FC<MobileShellProps> = ({
   activeNavTab = "home",
   themeColor = "blue",
 }) => {
-  const { flow, setFlow, studentScreen, setStudentScreen, driverScreen, setDriverScreen, deviceView, setDeviceView } = useMockup();
+  const { flow, setFlow, studentScreen, setStudentScreen, driverScreen, setDriverScreen } = useMockup();
+  const [showDevPanel, setShowDevPanel] = useState(false);
 
   const handleNavClick = (tab: "home" | "bookings" | "support" | "profile") => {
     if (flow === "student") {
@@ -31,163 +32,147 @@ export const MobileShell: React.FC<MobileShellProps> = ({
     }
   };
 
-  const activeColor = themeColor === "blue" ? "text-blue-600" : "text-orange-500";
+  const activeColor = themeColor === "blue" ? "text-blue-600 font-extrabold" : "text-orange-500 font-extrabold";
   const inactiveColor = "text-zinc-400 hover:text-zinc-600";
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-start py-4 px-2 sm:px-4">
-      {/* Top Demo Bar / Quick Switcher */}
-      <header className="w-full max-w-4xl flex flex-wrap items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 px-4 py-2.5 rounded-2xl mb-4 shadow-lg text-white">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center font-black text-black text-sm">
-            RM
-          </div>
-          <span className="font-extrabold text-sm tracking-tight text-white">
-            Ride Mitra • Pixel-Perfect UI
-          </span>
-        </div>
-
-        {/* Role Toggle */}
-        <div className="flex items-center bg-zinc-800 p-1 rounded-xl border border-zinc-700 text-xs font-bold">
-          <button
-            onClick={() => {
-              setFlow("student");
-              setStudentScreen(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              flow === "student" ? "bg-blue-600 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            🎓 Student Flow (13 Screens)
-          </button>
-          <button
-            onClick={() => {
-              setFlow("driver");
-              setDriverScreen(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              flow === "driver" ? "bg-orange-500 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            🛺 Driver Flow (8 Screens)
-          </button>
-        </div>
-
-        {/* Device View Toggle */}
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setDeviceView(deviceView === "mobile" ? "responsive" : "mobile")}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-zinc-300"
-            title="Toggle Device Frame"
-          >
-            {deviceView === "mobile" ? (
-              <>
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span>Full View</span>
-              </>
-            ) : (
-              <>
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>Phone Frame</span>
-              </>
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* Screen Selection Carousel Pill Bar */}
-      <div className="w-full max-w-4xl overflow-x-auto pb-3 mb-2 flex items-center gap-1.5 scrollbar-thin">
-        {flow === "student"
-          ? [
-              "1. Welcome",
-              "2. Login/Sign Up",
-              "3. Home Screen",
-              "4. Available Autos",
-              "5. Confirm Booking",
-              "6. Booking Success",
-              "7. Live Tracking",
-              "8. Trip In Progress",
-              "9. Trip Completed",
-              "10. Rate Driver",
-              "11. My Bookings",
-              "12. Profile",
-              "13. Support",
-            ].map((title, idx) => {
-              const screenNum = idx + 1;
-              const isActive = studentScreen === screenNum;
-              return (
-                <button
-                  key={screenNum}
-                  onClick={() => setStudentScreen(screenNum)}
-                  className={`text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap transition border ${
-                    isActive
-                      ? "bg-blue-600 text-white border-blue-500 shadow-md scale-105"
-                      : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200"
-                  }`}
-                >
-                  {title}
-                </button>
-              );
-            })
-          : [
-              "1. Welcome",
-              "2. Driver Login",
-              "3. Driver Registration",
-              "4. Driver Home",
-              "5. Ride Details",
-              "6. On Trip",
-              "7. Trip Completed",
-              "8. Driver Earnings",
-            ].map((title, idx) => {
-              const screenNum = idx + 1;
-              const isActive = driverScreen === screenNum;
-              return (
-                <button
-                  key={screenNum}
-                  onClick={() => setDriverScreen(screenNum)}
-                  className={`text-[11px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap transition border ${
-                    isActive
-                      ? "bg-orange-500 text-white border-orange-400 shadow-md scale-105"
-                      : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200"
-                  }`}
-                >
-                  {title}
-                </button>
-              );
-            })}
+    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col justify-start items-center">
+      {/* Floating Navigator Pill for quick role switching and screen selection */}
+      <div className="fixed top-3 right-3 z-50">
+        <button
+          onClick={() => setShowDevPanel(!showDevPanel)}
+          className="px-3.5 py-1.5 rounded-full bg-zinc-900/90 text-white shadow-xl text-xs font-bold border border-zinc-700/80 backdrop-blur-md flex items-center gap-1.5 hover:scale-105 active:scale-95 transition"
+          title="Switch Role or Screen"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+          <span>{flow === "student" ? "🎓 Student" : "🛺 Driver"}</span>
+        </button>
       </div>
 
-      {/* Mobile Device Frame */}
-      <div
-        className={`relative w-full ${
-          deviceView === "mobile"
-            ? "max-w-[390px] h-[844px] rounded-[48px] border-[10px] border-zinc-800 shadow-2xl ring-1 ring-zinc-700/50"
-            : "max-w-md min-h-[844px] rounded-3xl border-2 border-zinc-800 shadow-xl"
-        } bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 flex flex-col overflow-hidden transition-all duration-300`}
-      >
-        {/* iOS Dynamic Island & Status Bar */}
-        <div className="relative w-full h-11 flex items-center justify-between px-7 select-none z-30 pt-1 text-black dark:text-white">
-          <span className="text-[13px] font-bold tracking-tight">9:41</span>
-          {/* Dynamic Island Pill */}
-          <div className="w-24 h-4 bg-black rounded-full" />
-          <div className="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4" />
+      {/* Dev Switcher Drawer Modal */}
+      {showDevPanel && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 pt-16">
+          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-5 text-white shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-amber-400" />
+                <h3 className="font-extrabold text-sm">Ride Mitra Navigator</h3>
+              </div>
+              <button
+                onClick={() => setShowDevPanel(false)}
+                className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Role Switch */}
+            <div className="grid grid-cols-2 p-1 bg-zinc-800 rounded-xl text-xs font-bold">
+              <button
+                onClick={() => {
+                  setFlow("student");
+                  setStudentScreen(1);
+                  setShowDevPanel(false);
+                }}
+                className={`py-2 rounded-lg transition ${
+                  flow === "student" ? "bg-blue-600 text-white" : "text-zinc-400"
+                }`}
+              >
+                🎓 Student Flow
+              </button>
+              <button
+                onClick={() => {
+                  setFlow("driver");
+                  setDriverScreen(1);
+                  setShowDevPanel(false);
+                }}
+                className={`py-2 rounded-lg transition ${
+                  flow === "driver" ? "bg-orange-500 text-white" : "text-zinc-400"
+                }`}
+              >
+                🛺 Driver Flow
+              </button>
+            </div>
+
+            {/* Quick Screen Jump */}
+            <div>
+              <p className="text-[11px] font-bold text-zinc-400 mb-2 uppercase">Jump to Screen:</p>
+              <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1">
+                {flow === "student"
+                  ? [
+                      "1. Welcome",
+                      "2. Login/Sign Up",
+                      "3. Home Screen",
+                      "4. Available Autos",
+                      "5. Confirm Booking",
+                      "6. Booking Success",
+                      "7. Live Tracking",
+                      "8. Trip In Progress",
+                      "9. Trip Completed",
+                      "10. Rate Driver",
+                      "11. My Bookings",
+                      "12. Profile",
+                      "13. Support",
+                    ].map((name, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setStudentScreen(i + 1);
+                          setShowDevPanel(false);
+                        }}
+                        className={`p-2 rounded-xl text-left text-xs font-semibold border ${
+                          studentScreen === i + 1
+                            ? "bg-blue-600 border-blue-500 text-white font-bold"
+                            : "bg-zinc-800/80 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800"
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))
+                  : [
+                      "1. Welcome",
+                      "2. Driver Login",
+                      "3. Driver Registration",
+                      "4. Driver Home",
+                      "5. Ride Details",
+                      "6. On Trip",
+                      "7. Trip Completed",
+                      "8. Driver Earnings",
+                    ].map((name, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setDriverScreen(i + 1);
+                          setShowDevPanel(false);
+                        }}
+                        className={`p-2 rounded-xl text-left text-xs font-semibold border ${
+                          driverScreen === i + 1
+                            ? "bg-orange-500 border-orange-400 text-white font-bold"
+                            : "bg-zinc-800/80 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800"
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Screen Content Container */}
-        <div className="flex-1 overflow-y-auto flex flex-col relative bg-zinc-50 dark:bg-zinc-950">
+      {/* Main App Container (Natural Mobile Screen - No Fake Phone Bezel) */}
+      <div className="w-full max-w-md min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 flex flex-col shadow-2xl relative overflow-x-hidden">
+        {/* Screen Content */}
+        <div className="flex-1 flex flex-col relative bg-zinc-50 dark:bg-zinc-950">
           {children}
         </div>
 
-        {/* Bottom Navigation Bar (When visible) */}
+        {/* Bottom Navigation Bar */}
         {showBottomNav && (
-          <nav className="w-full bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around py-2.5 px-2 z-20 shadow-md">
+          <nav className="w-full sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around py-2.5 px-2 z-30 shadow-lg">
             <button
               onClick={() => handleNavClick("home")}
-              className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
+              className={`flex flex-col items-center gap-1 text-[10px] ${
                 activeNavTab === "home" ? activeColor : inactiveColor
               }`}
             >
@@ -196,7 +181,7 @@ export const MobileShell: React.FC<MobileShellProps> = ({
             </button>
             <button
               onClick={() => handleNavClick("bookings")}
-              className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
+              className={`flex flex-col items-center gap-1 text-[10px] ${
                 activeNavTab === "bookings" ? activeColor : inactiveColor
               }`}
             >
@@ -205,7 +190,7 @@ export const MobileShell: React.FC<MobileShellProps> = ({
             </button>
             <button
               onClick={() => handleNavClick("support")}
-              className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
+              className={`flex flex-col items-center gap-1 text-[10px] ${
                 activeNavTab === "support" ? activeColor : inactiveColor
               }`}
             >
@@ -214,7 +199,7 @@ export const MobileShell: React.FC<MobileShellProps> = ({
             </button>
             <button
               onClick={() => handleNavClick("profile")}
-              className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
+              className={`flex flex-col items-center gap-1 text-[10px] ${
                 activeNavTab === "profile" ? activeColor : inactiveColor
               }`}
             >
@@ -223,11 +208,6 @@ export const MobileShell: React.FC<MobileShellProps> = ({
             </button>
           </nav>
         )}
-
-        {/* Bottom iOS Home Indicator */}
-        <div className="w-full py-2 flex justify-center bg-white dark:bg-zinc-900">
-          <div className="w-32 h-1 bg-zinc-400 dark:bg-zinc-600 rounded-full" />
-        </div>
       </div>
     </div>
   );
