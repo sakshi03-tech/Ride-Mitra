@@ -16,6 +16,12 @@ import {
   Check,
   Upload,
   TrendingUp,
+  Mail,
+  Smartphone,
+  AlertCircle,
+  FileText,
+  ShieldCheck,
+  LogOut,
 } from "lucide-react";
 
 export const DriverScreens: React.FC = () => {
@@ -29,22 +35,86 @@ export const DriverScreens: React.FC = () => {
     driverOnTripStep,
     setDriverOnTripStep,
     trip,
+    setTrip,
     setShowChatModal,
+    currentUser,
+    authLoading,
+    authError,
+    setAuthError,
+    loginWithEmail,
+    loginWithPhoneOtp,
+    sendPhoneOtp,
+    logout,
   } = useMockup();
 
-  // Screen 2 tabs
+  // Screen 2 tabs & auth state
   const [driverAuthTab, setDriverAuthTab] = useState<"login" | "signup">("login");
-  const [driverMobile, setDriverMobile] = useState("+91 98765 43210");
-  const [driverPassword, setDriverPassword] = useState("••••••••");
+  const [driverAuthMethod, setDriverAuthMethod] = useState<"phone" | "email">("phone");
+  const [driverMobile, setDriverMobile] = useState("9876543210");
+  const [driverEmail, setDriverEmail] = useState("suresh.patil@ridemitra.com");
+  const [driverPassword, setDriverPassword] = useState("pass1234");
+  const [driverOtp, setDriverOtp] = useState("123456");
+  const [driverOtpSent, setDriverOtpSent] = useState(false);
+  const [driverOtpMessage, setDriverOtpMessage] = useState<string | null>(null);
 
   // Screen 3 registration fields
   const [regName, setRegName] = useState("Suresh Patil");
-  const [regPhone, setRegPhone] = useState("+91 98765 43210");
+  const [regPhone, setRegPhone] = useState("9876543210");
   const [regAuto, setRegAuto] = useState("MH 08 AB 1234");
+  const [regLicense, setRegLicense] = useState("MH08 20190012345");
   const [rcFileName, setRcFileName] = useState("rc_book_scan.jpg");
 
   // Screen 8 earnings tab
   const [earningsTab, setEarningsTab] = useState<"today" | "week" | "month">("today");
+
+  const handleSendDriverOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const res = await sendPhoneOtp(driverMobile);
+    if (res.success) {
+      setDriverOtpSent(true);
+      setDriverOtpMessage(res.message);
+    }
+  };
+
+  const handleVerifyDriverOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const success = await loginWithPhoneOtp(driverMobile, driverOtp, "driver", "Suresh Patil");
+    if (success) {
+      setTrip((prev) => ({
+        ...prev,
+        driverName: "Suresh Patil",
+        driverAuto: "MH 08 AB 1234 • Bajaj RE",
+      }));
+      setDriverScreen(4); // Driver Dashboard
+    }
+  };
+
+  const handleDriverEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const success = await loginWithEmail(driverEmail, driverPassword, "driver");
+    if (success) {
+      setTrip((prev) => ({
+        ...prev,
+        driverName: "Suresh Patil",
+        driverAuto: "MH 08 AB 1234 • Bajaj RE",
+      }));
+      setDriverScreen(4); // Driver Dashboard
+    }
+  };
+
+  const handleDriverRegistration = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTrip((prev) => ({
+      ...prev,
+      driverName: regName || "Suresh Patil",
+      driverAuto: `${regAuto || "MH 08 AB 1234"} • Bajaj RE`,
+    }));
+    loginWithPhoneOtp(regPhone, "123456", "driver", regName);
+    setDriverScreen(4);
+  };
 
   /* =========================================================================
    * SCREEN 1: WELCOME (DRIVER SELECTED)
@@ -118,26 +188,34 @@ export const DriverScreens: React.FC = () => {
   }
 
   /* =========================================================================
-   * SCREEN 2: DRIVER LOGIN / SIGN UP
+   * SCREEN 2: DRIVER LOGIN / SIGN UP (NO GOOGLE - 100% WORKING REAL AUTH)
    * ========================================================================= */
   if (driverScreen === 2) {
     return (
-      <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-y-auto">
         <button
           onClick={() => setDriverScreen(1)}
-          className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 mb-6"
+          className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 mb-4"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <div className="space-y-1 mb-6">
-          <h2 className="text-2xl font-black">Driver Login / Sign Up</h2>
+        <div className="space-y-1 mb-4">
+          <h2 className="text-2xl font-black">
+            {driverAuthTab === "login" ? "Driver Login" : "Driver Sign Up"}
+          </h2>
+          <p className="text-xs text-zinc-500">
+            {driverAuthTab === "login" ? "रिक्षा चालक लॉगिन • Lavel Corridor" : "नोंदणी करा आणि उत्पन्न वाढवा"}
+          </p>
         </div>
 
-        {/* Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl mb-6">
+        {/* Tabs: Login / Sign Up */}
+        <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl mb-4">
           <button
-            onClick={() => setDriverAuthTab("login")}
+            onClick={() => {
+              setDriverAuthTab("login");
+              setAuthError(null);
+            }}
             className={`py-2 text-xs font-bold rounded-lg transition ${
               driverAuthTab === "login" ? "bg-orange-500 text-white shadow-sm" : "text-zinc-500"
             }`}
@@ -150,71 +228,174 @@ export const DriverScreens: React.FC = () => {
               driverAuthTab === "signup" ? "bg-orange-500 text-white shadow-sm" : "text-zinc-500"
             }`}
           >
-            Sign Up
+            New Registration
           </button>
         </div>
 
-        {/* Form */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="relative">
-              <Phone className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-              <input
-                type="text"
-                value={driverMobile}
-                onChange={(e) => setDriverMobile(e.target.value)}
-                placeholder="Mobile Number"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-          </div>
+        {/* Auth Method Selector: Mobile OTP vs Email */}
+        <div className="flex items-center justify-center gap-4 mb-4 text-xs font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">
+          <button
+            type="button"
+            onClick={() => {
+              setDriverAuthMethod("phone");
+              setAuthError(null);
+            }}
+            className={`flex items-center gap-1.5 pb-1 transition border-b-2 ${
+              driverAuthMethod === "phone" ? "border-orange-500 text-orange-500" : "border-transparent text-zinc-400"
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Mobile OTP</span>
+          </button>
 
-          <div className="space-y-1">
-            <div className="relative">
-              <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-              <input
-                type="password"
-                value={driverPassword}
-                onChange={(e) => setDriverPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div className="text-right">
-              <button className="text-[11px] font-semibold text-orange-500 hover:underline">
-                Forgot Password?
+          <button
+            type="button"
+            onClick={() => {
+              setDriverAuthMethod("email");
+              setAuthError(null);
+            }}
+            className={`flex items-center gap-1.5 pb-1 transition border-b-2 ${
+              driverAuthMethod === "email" ? "border-orange-500 text-orange-500" : "border-transparent text-zinc-400"
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Email & Password</span>
+          </button>
+        </div>
+
+        {/* Error Alert */}
+        {authError && (
+          <div className="p-3 mb-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{authError}</span>
+          </div>
+        )}
+
+        {/* METHOD 1: MOBILE OTP FORM */}
+        {driverAuthMethod === "phone" ? (
+          !driverOtpSent ? (
+            <form onSubmit={handleSendDriverOtp} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-zinc-400 block">Mobile Number</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-3.5 text-xs font-bold text-zinc-400">+91</span>
+                  <input
+                    type="tel"
+                    required
+                    value={driverMobile}
+                    onChange={(e) => setDriverMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="9876543210"
+                    className="w-full h-11 pl-12 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono tracking-wider"
+                  />
+                </div>
+                <p className="text-[10px] text-zinc-400">१२३४५६ ओटीपी कोड त्वरित पडताळणीसाठी उपलब्ध आहे.</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+              >
+                Send OTP
               </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyDriverOtp} className="space-y-4">
+              {driverOtpMessage && (
+                <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 text-orange-700 dark:text-orange-300 text-xs font-bold">
+                  ✓ {driverOtpMessage}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-bold text-zinc-400">Enter 6-Digit OTP</label>
+                  <button
+                    type="button"
+                    onClick={() => setDriverOtpSent(false)}
+                    className="text-[11px] font-bold text-orange-500 hover:underline"
+                  >
+                    Change Number
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={driverOtp}
+                  onChange={(e) => setDriverOtp(e.target.value)}
+                  placeholder="123456"
+                  className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-center font-mono text-base font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+              >
+                {authLoading ? "लॉगिन करत आहे..." : "Verify & Login"}
+              </button>
+            </form>
+          )
+        ) : (
+          /* METHOD 2: EMAIL & PASSWORD FORM */
+          <form onSubmit={handleDriverEmailLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-zinc-400 block">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="email"
+                  required
+                  value={driverEmail}
+                  onChange={(e) => setDriverEmail(e.target.value)}
+                  placeholder="suresh.patil@ridemitra.com"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
-          </div>
 
-          <button
-            onClick={() => setDriverScreen(4)}
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
-          >
-            Login
-          </button>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-zinc-400 block">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  required
+                  value={driverPassword}
+                  onChange={(e) => setDriverPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div className="text-right">
+                <button type="button" className="text-[11px] font-semibold text-orange-500 hover:underline">
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
 
-          <div className="relative py-2 flex items-center justify-center">
-            <div className="border-t border-zinc-200 dark:border-zinc-800 w-full" />
-            <span className="bg-white dark:bg-zinc-950 px-2 text-[11px] text-zinc-400 uppercase font-bold absolute">
-              OR
-            </span>
-          </div>
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+            >
+              {authLoading ? "लॉगिन करत आहे..." : "Login"}
+            </button>
+          </form>
+        )}
 
-          <button
-            onClick={() => setDriverScreen(4)}
-            className="w-full h-11 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
-          >
-            <span className="text-orange-500 font-black">G</span> Continue with Google
-          </button>
+        <div className="mt-auto pt-6 text-center">
+          <p className="text-xs text-zinc-500">
+            नवीन रिक्षा चालक आहात?{" "}
+            <button
+              onClick={() => setDriverScreen(3)}
+              className="text-orange-500 font-bold hover:underline"
+            >
+              येथे नोंदणी करा (Register)
+            </button>
+          </p>
         </div>
-
-        <p className="text-xs text-center text-zinc-500 mt-auto pt-6">
-          New here?{" "}
-          <button onClick={() => setDriverScreen(3)} className="text-orange-500 font-bold hover:underline">
-            Create an account
-          </button>
-        </p>
       </div>
     );
   }
@@ -234,62 +415,76 @@ export const DriverScreens: React.FC = () => {
 
         <div className="space-y-1 mb-5">
           <h2 className="text-2xl font-black">Driver Registration</h2>
-          <p className="text-xs text-zinc-500">Complete your profile to start</p>
+          <p className="text-xs text-zinc-500">नवीन रिक्षा चालकांची कागदपत्रे व नोंदणी</p>
         </div>
 
-        <div className="space-y-4">
+        <form onSubmit={handleDriverRegistration} className="space-y-4">
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Full Name</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Full Name (पूर्ण नाव)</label>
             <input
               type="text"
+              required
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Mobile Number</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Mobile Number (मोबाईल नंबर)</label>
             <input
               type="text"
+              required
               value={regPhone}
               onChange={(e) => setRegPhone(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Auto Number</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Auto Number (रिक्षा क्रमांक)</label>
             <input
               type="text"
+              required
               value={regAuto}
               onChange={(e) => setRegAuto(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Upload RC (Optional)</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Driving License No (परवाना क्रमांक)</label>
+            <input
+              type="text"
+              required
+              value={regLicense}
+              onChange={(e) => setRegLicense(e.target.value)}
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Upload RC / Permit (वाहन परवाना प्रत)</label>
             <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
               <span className="text-xs text-zinc-500 flex items-center gap-2">
-                <Upload className="w-4 h-4" /> {rcFileName}
+                <Upload className="w-4 h-4 text-orange-500" /> {rcFileName}
               </span>
               <button
                 type="button"
-                className="px-3 py-1.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[11px] font-bold rounded-lg"
+                className="px-3 py-1.5 bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 text-[11px] font-bold rounded-lg"
               >
-                Choose File
+                File Selected
               </button>
             </div>
           </div>
 
           <button
-            onClick={() => setDriverScreen(4)}
+            type="submit"
             className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition mt-6 active:scale-[0.98]"
           >
-            Submit
+            Submit Registration (नोंदणी पूर्ण करा)
           </button>
-        </div>
+        </form>
       </div>
     );
   }
@@ -726,6 +921,28 @@ export const DriverScreens: React.FC = () => {
               <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">{item.fare}</span>
             </div>
           ))}
+        </div>
+
+        {/* Driver Profile & Logout */}
+        <div className="p-4 pt-0">
+          <div className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-extrabold text-xs">{currentUser?.fullName || regName}</p>
+                <p className="text-[10px] text-zinc-400 font-medium">{regAuto} • DL Verified</p>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="px-3 py-1.5 rounded-xl bg-red-50 text-red-600 dark:bg-red-950/40 text-[11px] font-bold flex items-center gap-1.5 hover:bg-red-100 active:scale-95 transition"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     );

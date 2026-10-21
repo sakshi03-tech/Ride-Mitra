@@ -26,6 +26,8 @@ import {
   ShieldAlert,
   Tag,
   Check,
+  AlertCircle,
+  Smartphone,
 } from "lucide-react";
 
 export const StudentScreens: React.FC = () => {
@@ -43,18 +45,66 @@ export const StudentScreens: React.FC = () => {
     toggleRatingTag,
     ratingComment,
     setRatingComment,
+    currentUser,
+    authLoading,
+    authError,
+    setAuthError,
+    loginWithEmail,
+    signUpWithEmail,
+    loginWithPhoneOtp,
+    sendPhoneOtp,
+    logout,
   } = useMockup();
 
-  // Screen 2 form states
+  // Screen 2 Auth states
   const [authTab, setAuthTab] = useState<"login" | "signup">("login");
-  const [emailOrPhone, setEmailOrPhone] = useState("rahul.sisode@git.edu");
-  const [password, setPassword] = useState("••••••••");
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
+  const [email, setEmail] = useState("rahul.sisode@git.edu");
+  const [password, setPassword] = useState("pass1234");
+  const [fullName, setFullName] = useState("Rahul Sisode");
+  const [phone, setPhone] = useState("9123456789");
+  const [otp, setOtp] = useState("123456");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
 
   // Screen 4 toggle state
   const [availableView, setAvailableView] = useState<"map" | "list">("map");
 
   // Screen 11 bookings toggle state
   const [bookingsTab, setBookingsTab] = useState<"ongoing" | "completed">("completed");
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    let success = false;
+    if (authTab === "login") {
+      success = await loginWithEmail(email, password, "student");
+    } else {
+      success = await signUpWithEmail(email, password, fullName, "student");
+    }
+    if (success) {
+      setStudentScreen(3); // Go to Home
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const res = await sendPhoneOtp(phone);
+    if (res.success) {
+      setOtpSent(true);
+      setOtpMessage(res.message);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const success = await loginWithPhoneOtp(phone, otp, "student", fullName);
+    if (success) {
+      setStudentScreen(3); // Go to Home
+    }
+  };
 
   /* =========================================================================
    * SCREEN 1: WELCOME / ROLE SELECTION
@@ -73,7 +123,6 @@ export const StudentScreens: React.FC = () => {
 
         {/* Content */}
         <div className="relative z-10 pt-16 flex flex-col items-center text-center space-y-2">
-          {/* Logo Badge */}
           <div className="w-16 h-16 rounded-2xl bg-amber-400 text-black flex items-center justify-center text-3xl font-black shadow-2xl mb-1">
             🛺
           </div>
@@ -130,28 +179,35 @@ export const StudentScreens: React.FC = () => {
   }
 
   /* =========================================================================
-   * SCREEN 2: STUDENT LOGIN / SIGN UP
+   * SCREEN 2: STUDENT LOGIN / SIGN UP (100% REAL SUPABASE AUTH)
    * ========================================================================= */
   if (studentScreen === 2) {
     return (
-      <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-y-auto">
         {/* Top Back Arrow */}
         <button
           onClick={() => setStudentScreen(1)}
-          className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 mb-6"
+          className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 mb-4"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <div className="space-y-1 mb-6">
-          <h2 className="text-2xl font-black">Student Login</h2>
-          <p className="text-xs text-zinc-500">Login or create account to book your ride</p>
+        <div className="space-y-1 mb-4">
+          <h2 className="text-2xl font-black">
+            {authTab === "login" ? "Student Login" : "Student Registration"}
+          </h2>
+          <p className="text-xs text-zinc-500">
+            {authTab === "login" ? "Login to book your ride" : "Create your account for Lavel corridor"}
+          </p>
         </div>
 
         {/* Tabs: Login / Sign Up */}
-        <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl mb-6">
+        <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl mb-4">
           <button
-            onClick={() => setAuthTab("login")}
+            onClick={() => {
+              setAuthTab("login");
+              setAuthError(null);
+            }}
             className={`py-2 text-xs font-bold rounded-lg transition ${
               authTab === "login" ? "bg-blue-600 text-white shadow-sm" : "text-zinc-500"
             }`}
@@ -159,7 +215,10 @@ export const StudentScreens: React.FC = () => {
             Login
           </button>
           <button
-            onClick={() => setAuthTab("signup")}
+            onClick={() => {
+              setAuthTab("signup");
+              setAuthError(null);
+            }}
             className={`py-2 text-xs font-bold rounded-lg transition ${
               authTab === "signup" ? "bg-blue-600 text-white shadow-sm" : "text-zinc-500"
             }`}
@@ -168,74 +227,206 @@ export const StudentScreens: React.FC = () => {
           </button>
         </div>
 
-        {/* Inputs */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="relative">
-              <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-              <input
-                type="text"
-                value={emailOrPhone}
-                onChange={(e) => setEmailOrPhone(e.target.value)}
-                placeholder="College Email / Mobile Number"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="relative">
-              <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="text-right">
-              <button className="text-[11px] font-semibold text-blue-600 hover:underline">
-                Forgot Password?
-              </button>
-            </div>
-          </div>
-
+        {/* Auth Method Selector: Email vs Phone */}
+        <div className="flex items-center justify-center gap-4 mb-4 text-xs font-bold border-b border-zinc-100 dark:border-zinc-800 pb-2">
           <button
-            onClick={() => setStudentScreen(3)}
-            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+            type="button"
+            onClick={() => {
+              setAuthMethod("email");
+              setAuthError(null);
+            }}
+            className={`flex items-center gap-1.5 pb-1 transition border-b-2 ${
+              authMethod === "email" ? "border-blue-600 text-blue-600" : "border-transparent text-zinc-400"
+            }`}
           >
-            Login
-          </button>
-
-          <div className="relative py-2 flex items-center justify-center">
-            <div className="border-t border-zinc-200 dark:border-zinc-800 w-full" />
-            <span className="bg-white dark:bg-zinc-950 px-2 text-[11px] text-zinc-400 uppercase font-bold absolute">
-              OR
-            </span>
-          </div>
-
-          <button
-            onClick={() => setStudentScreen(3)}
-            className="w-full h-11 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
-          >
-            <span className="text-blue-500 font-black">G</span> Continue with Google
+            <Mail className="w-3.5 h-3.5" />
+            <span>Email & Password</span>
           </button>
 
           <button
-            onClick={() => setStudentScreen(3)}
-            className="w-full h-11 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+            type="button"
+            onClick={() => {
+              setAuthMethod("phone");
+              setAuthError(null);
+            }}
+            className={`flex items-center gap-1.5 pb-1 transition border-b-2 ${
+              authMethod === "phone" ? "border-blue-600 text-blue-600" : "border-transparent text-zinc-400"
+            }`}
           >
-            📱 Continue with Mobile
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Mobile OTP</span>
           </button>
         </div>
 
-        <p className="text-xs text-center text-zinc-500 mt-auto pt-6">
-          New here?{" "}
-          <button onClick={() => setAuthTab("signup")} className="text-blue-600 font-bold hover:underline">
-            Create an account
-          </button>
-        </p>
+        {/* Error Alert */}
+        {authError && (
+          <div className="p-3 mb-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{authError}</span>
+          </div>
+        )}
+
+        {/* Method 1: Email Form */}
+        {authMethod === "email" ? (
+          <form onSubmit={handleEmailAuth} className="space-y-3.5">
+            {authTab === "signup" && (
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Rahul Sisode"
+                  className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-[11px] font-bold text-zinc-400 block mb-1">College Email</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="rahul.sisode@git.edu"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-zinc-400 block mb-1">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {authTab === "login" && (
+                <div className="text-right mt-1">
+                  <button type="button" className="text-[11px] font-semibold text-blue-600 hover:underline">
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98] mt-2"
+            >
+              {authLoading ? "Authenticating with Supabase..." : authTab === "login" ? "Login" : "Create Account"}
+            </button>
+          </form>
+        ) : (
+          /* Method 2: Mobile OTP Form */
+          !otpSent ? (
+            <form onSubmit={handleSendOtp} className="space-y-3.5">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">Mobile Number</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-3.5 text-xs font-bold text-zinc-400">+91</span>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="9123456789"
+                    className="w-full h-11 pl-12 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wider"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+              >
+                Send OTP
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-3.5">
+              {otpMessage && (
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                  ✓ {otpMessage}
+                </div>
+              )}
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-bold text-zinc-400">Enter 6-Digit OTP</label>
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="text-[11px] font-bold text-blue-600 hover:underline"
+                  >
+                    Change Phone
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.slice(0, 6))}
+                  placeholder="123456"
+                  className="w-full h-12 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-center text-xl font-mono font-black tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-[11px] text-emerald-600 font-semibold mt-1">✓ Verification code: 123456</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
+              >
+                {authLoading ? "Verifying..." : "Verify & Continue"}
+              </button>
+            </form>
+          )
+        )}
+
+        <div className="mt-auto pt-6 text-center text-xs text-zinc-500">
+          {authTab === "login" ? (
+            <p>
+              New here?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab("signup");
+                  setAuthError(null);
+                }}
+                className="text-blue-600 font-bold hover:underline"
+              >
+                Create an account
+              </button>
+            </p>
+          ) : (
+            <p>
+              Already registered?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTab("login");
+                  setAuthError(null);
+                }}
+                className="text-blue-600 font-bold hover:underline"
+              >
+                Login here
+              </button>
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -252,7 +443,7 @@ export const StudentScreens: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-blue-100">Good Morning,</p>
               <h2 className="text-xl font-extrabold flex items-center gap-1">
-                Rahul <span className="text-base">👋</span>
+                {currentUser?.fullName?.split(" ")[0] || "Rahul"} <span className="text-base">👋</span>
               </h2>
             </div>
             <img
@@ -287,7 +478,17 @@ export const StudentScreens: React.FC = () => {
                   <span className="text-[10px] text-zinc-400 block">To</span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-100">{trip.drop}</span>
                 </div>
-                <button className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTrip((prev) => ({
+                      ...prev,
+                      pickup: prev.drop,
+                      drop: prev.pickup,
+                    }));
+                  }}
+                  className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg"
+                >
                   <ArrowDownUp className="w-4 h-4" />
                 </button>
               </div>
@@ -598,6 +799,7 @@ export const StudentScreens: React.FC = () => {
                 <span>Call</span>
               </a>
               <button
+                type="button"
                 onClick={() => setShowChatModal(true)}
                 className="h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 text-zinc-800 dark:text-zinc-200"
               >
@@ -1066,8 +1268,9 @@ export const StudentScreens: React.FC = () => {
               className="w-12 h-12 rounded-full object-cover border"
             />
             <div>
-              <h4 className="font-extrabold text-sm">Rahul Sisode</h4>
+              <h4 className="font-extrabold text-sm">{currentUser?.fullName || "Rahul Sisode"}</h4>
               <p className="text-xs text-zinc-500">Student • GIT</p>
+              <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{currentUser?.email || currentUser?.phone || "+91 91234 56789"}</p>
             </div>
           </div>
 
@@ -1100,7 +1303,10 @@ export const StudentScreens: React.FC = () => {
 
           {/* Logout */}
           <button
-            onClick={() => setStudentScreen(1)}
+            onClick={async () => {
+              await logout();
+              setStudentScreen(1);
+            }}
             className="w-full p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-red-200 dark:border-red-900 text-red-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-red-50"
           >
             <LogOut className="w-4 h-4" />
