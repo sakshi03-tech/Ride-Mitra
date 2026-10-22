@@ -195,6 +195,31 @@ export const MobileShell: React.FC<MobileShellProps> = ({
                     ))}
               </div>
             </div>
+
+            {/* Quick Share & APK Download Actions */}
+            <div className="pt-3 border-t border-zinc-800 space-y-2">
+              <p className="text-[11px] font-bold text-zinc-400 uppercase">Share & Download App:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="/RideMitra.apk"
+                  download="RideMitra.apk"
+                  className="py-2.5 px-3 rounded-xl bg-amber-400 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 hover:bg-amber-500 shadow-md transition"
+                >
+                  <span>⬇️ Download APK</span>
+                </a>
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                    "रिक्षा मित्र (Ride Mitra) ॲप डाउनलोड करा - लावेल ↔ जीआयटी कॉलेज कॉरिडॉर रिक्षा बुकिंग: " +
+                      window.location.origin
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-700 shadow-md transition"
+                >
+                  <span>💬 WhatsApp वर पाठवा</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}

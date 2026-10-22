@@ -197,6 +197,27 @@ export const StudentScreens: React.FC = () => {
           <p className="text-[11px] text-zinc-400 text-center pt-2">
             Lavel Stop ↔ Gharda Institute of Technology
           </p>
+
+          {/* Quick APK Download & WhatsApp Share */}
+          <div className="pt-2 flex items-center justify-center gap-2">
+            <a
+              href="/RideMitra.apk"
+              download="RideMitra.apk"
+              className="px-3 py-1.5 rounded-full bg-amber-400 text-black text-[11px] font-extrabold flex items-center gap-1 shadow hover:scale-105 transition"
+            >
+              <span>⬇️ Download APK</span>
+            </a>
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                "रिक्षा मित्र (Ride Mitra) ॲप डाउनलोड करा: " + window.location.origin
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-extrabold flex items-center gap-1 shadow hover:scale-105 transition"
+            >
+              <span>💬 WhatsApp Share</span>
+            </a>
+          </div>
         </div>
       </div>
     );
