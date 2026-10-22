@@ -423,11 +423,13 @@ export const StudentScreens: React.FC = () => {
                   type="text"
                   required
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.slice(0, 6))}
-                  placeholder="Enter 6-digit OTP"
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="• • • • • •"
                   className="w-full h-12 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-center text-xl font-mono font-black tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="text-[11px] text-emerald-600 font-semibold mt-1">✓ Verification code: 123456</p>
+                <p className="text-[11px] text-zinc-400 mt-1">
+                  तुमच्या SMS मधील ६ अंकी कोड टाका (उदा. वरील सूचना पहा)
+                </p>
               </div>
 
               <button

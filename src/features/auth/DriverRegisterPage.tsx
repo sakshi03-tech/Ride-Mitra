@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./AuthContext";
 import { validateAadhaar } from "@/lib/aadhaar";
+import { FileUpload } from "@/components/ui/FileUpload";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +20,12 @@ export const DriverRegisterPage: React.FC = () => {
   const [autoNumber, setAutoNumber] = useState("");
   const [seatCapacity, setSeatCapacity] = useState(3);
   const [aadhaarNumber, setAadhaarNumber] = useState("");
-  const [licenceUploaded, setLicenceUploaded] = useState(false);
-  const [rcUploaded, setRcUploaded] = useState(false);
-  const [aadhaarUploaded, setAadhaarUploaded] = useState(false);
+  const [aadhaarDataUrl, setAadhaarDataUrl] = useState<string | null>(null);
+  const [aadhaarFileName, setAadhaarFileName] = useState<string | null>(null);
+  const [dlDataUrl, setDlDataUrl] = useState<string | null>(null);
+  const [dlFileName, setDlFileName] = useState<string | null>(null);
+  const [rcDataUrl, setRcDataUrl] = useState<string | null>(null);
+  const [rcFileName, setRcFileName] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,9 +53,9 @@ export const DriverRegisterPage: React.FC = () => {
       autoNumber,
       seatCapacity,
       aadhaarNumber,
-      aadhaarUrl: aadhaarUploaded ? "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80" : undefined,
-      licenceUrl: licenceUploaded ? "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80" : undefined,
-      rcUrl: rcUploaded ? "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80" : undefined,
+      aadhaarUrl: aadhaarDataUrl || undefined,
+      licenceUrl: dlDataUrl || undefined,
+      rcUrl: rcDataUrl || undefined,
     });
     setLoading(false);
 
@@ -226,50 +230,55 @@ export const DriverRegisterPage: React.FC = () => {
               </div>
 
               {/* Document upload section */}
-              <div className="pt-2 border-t space-y-2">
+              <div className="pt-2 border-t space-y-3">
                 <label className="block text-sm font-bold text-muted-foreground">
                   कागदपत्रे अपलोड (Upload Required Documents)
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAadhaarUploaded(!aadhaarUploaded)}
-                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
-                      aadhaarUploaded
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
-                        : "border-input bg-background hover:border-rickshaw-400"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>{aadhaarUploaded ? "✓ आधार जोडले" : "+ आधार कार्ड"}</span>
-                  </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setLicenceUploaded(!licenceUploaded)}
-                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
-                      licenceUploaded
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
-                        : "border-input bg-background hover:border-rickshaw-400"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>{licenceUploaded ? "✓ लायसन्स जोडले" : "+ लायसन्स"}</span>
-                  </button>
+                <FileUpload
+                  label="१. आधार कार्ड प्रत (Aadhaar Card Front/Back)"
+                  sublabel="कॅमेरा फोटो किंवा फाईल"
+                  value={aadhaarDataUrl}
+                  fileName={aadhaarFileName}
+                  onChange={(url, name) => {
+                    setAadhaarDataUrl(url);
+                    setAadhaarFileName(name);
+                  }}
+                  onRemove={() => {
+                    setAadhaarDataUrl(null);
+                    setAadhaarFileName(null);
+                  }}
+                />
 
-                  <button
-                    type="button"
-                    onClick={() => setRcUploaded(!rcUploaded)}
-                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
-                      rcUploaded
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
-                        : "border-input bg-background hover:border-rickshaw-400"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>{rcUploaded ? "✓ आरसी जोडली" : "+ वाहन आरसी"}</span>
-                  </button>
-                </div>
+                <FileUpload
+                  label="२. ड्रायव्हिंग लायसन्स (Driving Licence Photo)"
+                  sublabel="परवान्याची प्रत"
+                  value={dlDataUrl}
+                  fileName={dlFileName}
+                  onChange={(url, name) => {
+                    setDlDataUrl(url);
+                    setDlFileName(name);
+                  }}
+                  onRemove={() => {
+                    setDlDataUrl(null);
+                    setDlFileName(null);
+                  }}
+                />
+
+                <FileUpload
+                  label="३. वाहन आरसी बुक (Vehicle RC / Permit)"
+                  sublabel="नोंदणी पुस्तक प्रत"
+                  value={rcDataUrl}
+                  fileName={rcFileName}
+                  onChange={(url, name) => {
+                    setRcDataUrl(url);
+                    setRcFileName(name);
+                  }}
+                  onRemove={() => {
+                    setRcDataUrl(null);
+                    setRcFileName(null);
+                  }}
+                />
               </div>
 
               <Button

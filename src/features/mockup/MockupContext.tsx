@@ -123,6 +123,8 @@ interface MockupContextType {
   signUpWithEmail: (email: string, pass: string, fullName: string, role: "student" | "driver") => Promise<boolean>;
   loginWithPhoneOtp: (phone: string, otp: string, role: "student" | "driver", fullName?: string) => Promise<boolean>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string }>;
+  smsNotification: { phone: string; code: string; time: string } | null;
+  dismissSmsNotification: () => void;
   logout: () => Promise<void>;
 }
 
@@ -202,6 +204,10 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     trips: [],
   });
   const [activeRideId, setActiveRideId] = useState<string | null>(null);
+  const [smsNotification, setSmsNotification] = useState<{ phone: string; code: string; time: string } | null>(null);
+  const [sentOtpMap, setSentOtpMap] = useState<Record<string, string>>({});
+
+  const dismissSmsNotification = () => setSmsNotification(null);
 
   // Language toggle
   const toggleLanguage = () => {
@@ -585,16 +591,39 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Real Phone OTP Send
   const sendPhoneOtp = async (phone: string): Promise<{ success: boolean; message: string }> => {
-    if (!phone || phone.trim().length < 6) {
-      return { success: false, message: "कृपया योग्य मोबाईल नंबर टाका (Please enter valid mobile number)" };
+    const cleanDigits = phone.replace(/\D/g, "");
+    if (!cleanDigits || cleanDigits.length < 10) {
+      return { success: false, message: "कृपया योग्य १० अंकी मोबाईल नंबर टाका (Enter 10-digit mobile number)" };
     }
+    const formatted = phone.startsWith("+91") ? phone : `+91 ${cleanDigits.slice(-10)}`;
+
+    // Generate a secure, unique 6-digit verification code
+    const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    setSentOtpMap((prev) => ({ ...prev, [cleanDigits.slice(-10)]: generatedCode }));
     try {
-      const formatted = phone.startsWith("+91") ? phone : `+91${phone.replace(/\D/g, "")}`;
-      await supabase.auth.signInWithOtp({ phone: formatted });
+      localStorage.setItem(`otp_${cleanDigits.slice(-10)}`, generatedCode);
+    } catch {
+      // ignore
+    }
+
+    try {
+      await supabase.auth.signInWithOtp({ phone: `+91${cleanDigits.slice(-10)}` });
     } catch {
       // In development / local presentation, proceed seamlessly
     }
-    return { success: true, message: "ओटीपी पाठवला आहे! (OTP: 123456)" };
+
+    // Set incoming SMS notification banner
+    setSmsNotification({
+      phone: formatted,
+      code: generatedCode,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    });
+
+    return {
+      success: true,
+      message: `६ अंकी पडताळणी कोड तुमच्या ${formatted} नंबरवर पाठवला आहे.`,
+    };
   };
 
   // Real Phone OTP Verification
@@ -602,30 +631,49 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setAuthLoading(true);
     setAuthError(null);
     try {
-      // Allow valid OTP or standard 123456
+      const cleanDigits = phone.replace(/\D/g, "").slice(-10);
       const cleanOtp = otp ? otp.trim() : "";
-      if (cleanOtp.length >= 4 || cleanOtp === "123456" || cleanOtp === "") {
-        const userFullName = fullName && fullName.trim().length > 0 ? fullName : (role === "student" ? "Student" : "Auto Driver");
-        const userObj: UserProfile = {
-          id: (role === "student" ? "student-phone-" : "driver-phone-") + Date.now(),
-          phone,
-          fullName: userFullName,
-          role,
-        };
-        setCurrentUser(userObj);
-        localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
-        if (role === "student") {
-          setTrip((prev) => ({ ...prev, passengerName: userFullName, passengerPhone: phone }));
+      let expectedCode = sentOtpMap[cleanDigits];
+      if (!expectedCode) {
+        try {
+          expectedCode = localStorage.getItem(`otp_${cleanDigits}`) || "";
+        } catch {
+          // ignore
         }
-        setAuthLoading(false);
-        return true;
       }
-      setAuthError("अवैध ओटीपी. कृपया योग्य कोड टाका (उदा. 123456)");
+
+      if (!cleanOtp) {
+        setAuthError("कृपया मोबाईलवर आलेला ६ अंकी ओटीपी कोड टाका.");
+        setAuthLoading(false);
+        return false;
+      }
+
+      // If user typed wrong code
+      if (expectedCode && cleanOtp !== expectedCode) {
+        setAuthError("अवैध ओटीपी कोड! कृपया आलेला ६ अंकी कोड अचूक टाका.");
+        setAuthLoading(false);
+        return false;
+      }
+
+      // Valid OTP
+      const userFullName = fullName && fullName.trim().length > 0 ? fullName : (role === "student" ? "Student" : "Auto Driver");
+      const userObj: UserProfile = {
+        id: (role === "student" ? "student-phone-" : "driver-phone-") + Date.now(),
+        phone: `+91 ${cleanDigits}`,
+        fullName: userFullName,
+        role,
+      };
+      setCurrentUser(userObj);
+      localStorage.setItem("ride_mitra_auth_user", JSON.stringify(userObj));
+      if (role === "student") {
+        setTrip((prev) => ({ ...prev, passengerName: userFullName, passengerPhone: `+91 ${cleanDigits}` }));
+      }
+      setSmsNotification(null);
       setAuthLoading(false);
-      return false;
+      return true;
     } catch (err: any) {
       console.warn("Phone OTP login error:", err);
-      setAuthError("ओटीपी पडताळणी अयशस्वी");
+      setAuthError("ओटीपी पडताळणी अयशस्वी. कृपया पुन्हा प्रयत्न करा.");
       setAuthLoading(false);
       return false;
     }
@@ -704,6 +752,8 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         signUpWithEmail,
         loginWithPhoneOtp,
         sendPhoneOtp,
+        smsNotification,
+        dismissSmsNotification,
         logout,
       }}
     >

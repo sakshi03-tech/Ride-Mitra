@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMockup } from "./MockupContext";
 import { MockupMap } from "./MockupMap";
 import { validateAadhaar } from "@/lib/aadhaar";
+import { FileUpload } from "@/components/ui/FileUpload";
 import {
   Car,
   GraduationCap,
@@ -69,9 +70,12 @@ export const DriverScreens: React.FC = () => {
   const [regAuto, setRegAuto] = useState("");
   const [regLicense, setRegLicense] = useState("");
   const [regAadhaar, setRegAadhaar] = useState("");
-  const [dlFileName, setDlFileName] = useState("driving_licence_scan.jpg");
-  const [rcFileName, setRcFileName] = useState("rc_book_scan.jpg");
-  const [aadhaarFileName, setAadhaarFileName] = useState("aadhaar_card_front_back.jpg");
+  const [aadhaarDataUrl, setAadhaarDataUrl] = useState<string | null>(null);
+  const [aadhaarFileName, setAadhaarFileName] = useState<string | null>(null);
+  const [dlDataUrl, setDlDataUrl] = useState<string | null>(null);
+  const [dlFileName, setDlFileName] = useState<string | null>(null);
+  const [rcDataUrl, setRcDataUrl] = useState<string | null>(null);
+  const [rcFileName, setRcFileName] = useState<string | null>(null);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regSubmitting, setRegSubmitting] = useState(false);
 
@@ -129,10 +133,10 @@ export const DriverScreens: React.FC = () => {
       phone: regPhone,
       autoNumber: auto,
       dlNumber: license,
-      dlUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
-      rcUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+      dlUrl: dlDataUrl || undefined,
+      rcUrl: rcDataUrl || undefined,
       aadhaarNumber: regAadhaar,
-      aadhaarUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80",
+      aadhaarUrl: aadhaarDataUrl || undefined,
     });
 
     setRegSubmitting(false);
@@ -349,7 +353,7 @@ export const DriverScreens: React.FC = () => {
                     className="w-full h-11 pl-12 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono tracking-wider"
                   />
                 </div>
-                <p className="text-[10px] text-zinc-400">१२३४५६ ओटीपी कोड त्वरित पडताळणीसाठी उपलब्ध आहे.</p>
+                <p className="text-[10px] text-zinc-400">मोबाईल नंबरवर पडताळणीसाठी ६ अंकी SMS कोड पाठवला जाईल.</p>
               </div>
 
               <button
@@ -383,10 +387,13 @@ export const DriverScreens: React.FC = () => {
                   type="text"
                   required
                   value={driverOtp}
-                  onChange={(e) => setDriverOtp(e.target.value)}
-                  placeholder="Enter 6-digit OTP"
-                  className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-center font-mono text-base font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  onChange={(e) => setDriverOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="• • • • • •"
+                  className="w-full h-12 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-center font-mono text-xl font-black tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
+                <p className="text-[10px] text-zinc-400">
+                  तुमच्या मोबाईलवर SMS द्वारे आलेला ६ अंकी कोड टाका.
+                </p>
               </div>
 
               <button
@@ -649,59 +656,62 @@ export const DriverScreens: React.FC = () => {
             />
           </div>
 
-          {/* DOCUMENT UPLOADS */}
+          {/* REAL DOCUMENT UPLOADS */}
           <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
             <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-              आवश्यक कागदपत्रे अपलोड (Upload Documents)
+              आवश्यक कागदपत्रे अपलोड (Upload Required Documents)
             </p>
 
             {/* 1. Aadhaar Card Photo Upload */}
-            <div>
-              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
-                १. आधार कार्ड प्रत (Aadhaar Card Front/Back)
-              </label>
-              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
-                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
-                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span className="truncate">{aadhaarFileName}</span>
-                </span>
-                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
-                  ✓ निवडले
-                </span>
-              </div>
-            </div>
+            <FileUpload
+              label="१. आधार कार्ड प्रत (Aadhaar Card Front/Back)"
+              sublabel="कॅमेरा फोटो किंवा JPG/PNG"
+              required
+              value={aadhaarDataUrl}
+              fileName={aadhaarFileName}
+              onChange={(dataUrl, name) => {
+                setAadhaarDataUrl(dataUrl);
+                setAadhaarFileName(name);
+              }}
+              onRemove={() => {
+                setAadhaarDataUrl(null);
+                setAadhaarFileName(null);
+              }}
+            />
 
             {/* 2. Driving License Upload */}
-            <div>
-              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
-                २. ड्रायव्हिंग लायसन्स (Driving Licence Photo)
-              </label>
-              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
-                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
-                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span className="truncate">{dlFileName}</span>
-                </span>
-                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
-                  ✓ निवडले
-                </span>
-              </div>
-            </div>
+            <FileUpload
+              label="२. ड्रायव्हिंग लायसन्स (Driving Licence Photo)"
+              sublabel="परवान्याची स्पष्ट प्रत"
+              required
+              value={dlDataUrl}
+              fileName={dlFileName}
+              onChange={(dataUrl, name) => {
+                setDlDataUrl(dataUrl);
+                setDlFileName(name);
+              }}
+              onRemove={() => {
+                setDlDataUrl(null);
+                setDlFileName(null);
+              }}
+            />
 
             {/* 3. RC Book Upload */}
-            <div>
-              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
-                ३. वाहन आरसी बुक (Vehicle RC / Permit)
-              </label>
-              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
-                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
-                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                  <span className="truncate">{rcFileName}</span>
-                </span>
-                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
-                  ✓ निवडले
-                </span>
-              </div>
-            </div>
+            <FileUpload
+              label="३. वाहन आरसी बुक (Vehicle RC / Permit)"
+              sublabel="रिक्षा नोंदणी पुस्तक"
+              required
+              value={rcDataUrl}
+              fileName={rcFileName}
+              onChange={(dataUrl, name) => {
+                setRcDataUrl(dataUrl);
+                setRcFileName(name);
+              }}
+              onRemove={() => {
+                setRcDataUrl(null);
+                setRcFileName(null);
+              }}
+            />
           </div>
 
           <button
