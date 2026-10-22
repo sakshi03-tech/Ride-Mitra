@@ -52,6 +52,9 @@ export const DriverScreens: React.FC = () => {
     driverEarningsSummary,
     registerDriverWithDocs,
     driverDocs,
+    tText,
+    verifyRideStartOtp,
+    rideOtp,
   } = useMockup();
 
   // Screen 2 tabs & auth state
@@ -78,6 +81,11 @@ export const DriverScreens: React.FC = () => {
   const [rcFileName, setRcFileName] = useState<string | null>(null);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regSubmitting, setRegSubmitting] = useState(false);
+
+  // Ola/Uber 4-digit Ride Start PIN verification state
+  const [pinInput, setPinInput] = useState("");
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   // Screen 8 earnings tab
   const [earningsTab, setEarningsTab] = useState<"today" | "week" | "month">("today");
@@ -787,20 +795,30 @@ export const DriverScreens: React.FC = () => {
         <div className="p-4">
           <div className="grid grid-cols-3 gap-2.5">
             <div className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-center shadow-sm">
-              <span className="text-xl font-black text-zinc-900 dark:text-zinc-100 block">5</span>
-              <span className="text-[10px] text-zinc-400 font-bold">Today Rides</span>
+              <span className="text-xl font-black text-zinc-900 dark:text-zinc-100 block">
+                {driverEarningsSummary.tripsCount}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-bold">
+                {tText("आजच्या फेऱ्या", "Today Rides")}
+              </span>
             </div>
 
             <div className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-center shadow-sm">
-              <span className="text-xl font-black text-orange-500 block">₹150</span>
-              <span className="text-[10px] text-zinc-400 font-bold">Today Earnings</span>
+              <span className="text-xl font-black text-orange-500 block">
+                ₹{driverEarningsSummary.totalAmount}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-bold">
+                {tText("आजची कमाई", "Today Earnings")}
+              </span>
             </div>
 
             <div className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-center shadow-sm">
               <span className="text-xl font-black text-amber-500 flex items-center justify-center gap-0.5">
                 ★ 4.8
               </span>
-              <span className="text-[10px] text-zinc-400 font-bold">Rating</span>
+              <span className="text-[10px] text-zinc-400 font-bold">
+                {tText("रेटिंग", "Rating")}
+              </span>
             </div>
           </div>
         </div>
@@ -947,8 +965,93 @@ export const DriverScreens: React.FC = () => {
    * SCREEN 6: ON TRIP (NAVIGATE TO PICKUP & ON TRIP)
    * ========================================================================= */
   if (driverScreen === 6) {
+    const handleVerifyAndStartTrip = (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      setPinError(null);
+      const cleanPin = pinInput.trim();
+      if (!cleanPin || cleanPin.length !== 4) {
+        setPinError(tText("कृपया ४ अंकी पिन टाका", "Please enter 4-digit PIN"));
+        return;
+      }
+      if (verifyRideStartOtp(cleanPin) || cleanPin === rideOtp) {
+        setPinModalOpen(false);
+        setPinInput("");
+        setDriverOnTripStep("complete_trip");
+      } else {
+        setPinError(tText("अवैध पिन! प्रवाशाच्या मोबाईलमधील ४ अंकी पिन तपासा.", "Invalid PIN! Please check with passenger."));
+      }
+    };
+
     return (
-      <div className="flex-1 flex flex-col justify-between bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <div className="flex-1 flex flex-col justify-between bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 relative">
+        {/* Ola/Uber 4-digit Ride PIN Verification Modal */}
+        {pinModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+              <div className="text-center space-y-1">
+                <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 mx-auto flex items-center justify-center font-black text-xl mb-1">
+                  🔐
+                </div>
+                <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100">
+                  {tText("प्रवाशाचा ४ अंकी पिन (Ride PIN) टाका", "Enter Passenger's 4-Digit Ride PIN")}
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  {tText("प्रवाशाच्या ॲप स्क्रीनवर दिसणारा कोड विचारा", "Ask passenger for the 4-digit PIN on their screen")}
+                </p>
+              </div>
+
+              {pinError && (
+                <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 text-xs font-bold text-center">
+                  {pinError}
+                </div>
+              )}
+
+              <form onSubmit={handleVerifyAndStartTrip} className="space-y-4">
+                <input
+                  type="text"
+                  maxLength={4}
+                  autoFocus
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="• • • •"
+                  className="w-full h-14 rounded-2xl border-2 border-orange-400 bg-zinc-50 dark:bg-zinc-800 text-center font-mono font-black text-2xl tracking-widest text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-4 focus:ring-orange-500/20"
+                />
+
+                {/* Quick Auto-fill for seamless testing */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinInput(rideOtp);
+                    setPinError(null);
+                  }}
+                  className="w-full text-center text-xs text-orange-600 dark:text-orange-400 font-bold hover:underline"
+                >
+                  {tText(`पिन भरा (${rideOtp})`, `Autofill PIN (${rideOtp})`)}
+                </button>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinModalOpen(false);
+                      setPinError(null);
+                    }}
+                    className="h-11 rounded-xl border border-zinc-300 dark:border-zinc-700 font-bold text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                  >
+                    {tText("रद्द करा", "Cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs shadow-md transition"
+                  >
+                    {tText("पिन तपासा व सुरू करा", "Verify & Start")}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         <div>
           {/* Header */}
           <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
@@ -959,36 +1062,49 @@ export const DriverScreens: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="text-center">
-              <h3 className="font-black text-sm">On Trip</h3>
-              <p className="text-[10px] text-zinc-400">
-                {driverOnTripStep === "reached_pickup" ? "Navigate to Pickup" : "In Progress"}
+              <h3 className="font-black text-sm">{tText("सध्याचा प्रवास (On Trip)", "On Trip")}</h3>
+              <p className="text-[10px] text-zinc-400 font-medium">
+                {driverOnTripStep === "reached_pickup"
+                  ? tText("पिकअप पॉईंटकडे जात आहात", "Navigate to Pickup")
+                  : driverOnTripStep === "start_trip"
+                  ? tText("पिकअपवर पोहोचलो", "At Pickup")
+                  : tText("प्रवास सुरू आहे", "Trip in progress")}
               </p>
             </div>
             <div className="w-8" />
           </div>
 
-          <MockupMap autoPosition="middle" className="h-64" />
+          <MockupMap
+            autoPosition={driverOnTripStep === "complete_trip" ? "middle" : "pickup"}
+            pillText={
+              driverOnTripStep === "complete_trip"
+                ? tText("प्रवास सुरू आहे", "Trip In Progress")
+                : tText("पिकअपकडे जात आहात", "Reaching Pickup")
+            }
+            className="h-64"
+          />
 
           {/* Contact Student Card */}
           <div className="p-4 space-y-4">
             <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-zinc-400 block font-bold uppercase">
-                  Contact Student
+                  {tText("विद्यार्थी प्रवासी", "Passenger")}
                 </span>
                 <h4 className="font-extrabold text-sm">{trip.passengerName || "Student Passenger"}</h4>
+                <p className="text-[10px] text-zinc-500 mt-0.5">{trip.pickup} ➔ {trip.drop}</p>
               </div>
 
               <div className="flex items-center gap-2">
                 <a
-                  href={`tel:${trip.passengerPhone || "9876543210"}`}
-                  className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"
+                  href={`tel:${trip.passengerPhone || "+919822334455"}`}
+                  className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center active:scale-95 transition"
                 >
                   <Phone className="w-4 h-4" />
                 </a>
                 <button
                   onClick={() => setShowChatModal(true)}
-                  className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center active:scale-95 transition"
                 >
                   <MessageSquare className="w-4 h-4" />
                 </button>
@@ -1002,18 +1118,19 @@ export const DriverScreens: React.FC = () => {
           {driverOnTripStep === "reached_pickup" && (
             <button
               onClick={() => setDriverOnTripStep("start_trip")}
-              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition"
+              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-extrabold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
             >
-              Reached Pickup
+              {tText("पिकअप पॉईंटवर पोहोचलो (Reached Pickup)", "Reached Pickup")}
             </button>
           )}
 
           {driverOnTripStep === "start_trip" && (
             <button
-              onClick={() => setDriverOnTripStep("complete_trip")}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition"
+              onClick={() => setPinModalOpen(true)}
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-sm shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              Start Trip
+              <span>🔐</span>
+              <span>{tText("पिन टाका व प्रवास सुरू करा (Start Trip)", "Enter PIN & Start Trip")}</span>
             </button>
           )}
 
@@ -1023,9 +1140,9 @@ export const DriverScreens: React.FC = () => {
                 await completeCurrentRide();
                 setDriverScreen(7);
               }}
-              className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm shadow-md transition"
+              className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
             >
-              Complete Trip
+              {tText("प्रवास पूर्ण करा (Complete Trip)", "Complete Trip")}
             </button>
           )}
         </div>
@@ -1166,18 +1283,30 @@ export const DriverScreens: React.FC = () => {
 
         {/* Trip List */}
         <div className="p-4 space-y-2.5 flex-1 overflow-y-auto">
-          {driverEarningsSummary.trips.map((item, idx) => (
-            <div
-              key={idx}
-              className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm"
-            >
-              <div>
-                <p className="font-bold text-xs text-zinc-800 dark:text-zinc-200">{item.route}</p>
-                <p className="text-[10px] text-zinc-400">{item.time}</p>
-              </div>
-              <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">{item.fare}</span>
+          {driverEarningsSummary.trips.length === 0 ? (
+            <div className="p-8 text-center bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-zinc-400 space-y-1">
+              <span className="text-2xl block mb-1">🛺</span>
+              <p className="font-extrabold text-xs text-zinc-600 dark:text-zinc-300">
+                {tText("आज अजून कोणतीही फेरी पूर्ण झालेली नाही", "No completed rides today yet")}
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                {tText("फेरी स्वीकारून पूर्ण केल्यावर येथे तपशील दिसेल.", "Completed trips will appear here.")}
+              </p>
             </div>
-          ))}
+          ) : (
+            driverEarningsSummary.trips.map((item, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm"
+              >
+                <div>
+                  <p className="font-bold text-xs text-zinc-800 dark:text-zinc-200">{item.route}</p>
+                  <p className="text-[10px] text-zinc-400">{item.time}</p>
+                </div>
+                <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">{item.fare}</span>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Driver Profile & Logout */}

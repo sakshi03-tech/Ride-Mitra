@@ -61,6 +61,8 @@ export const StudentScreens: React.FC = () => {
     bookRealRide,
     submitRatingAction,
     submitSosAction,
+    tText,
+    rideOtp,
   } = useMockup();
 
   // Screen 2 Auth states
@@ -488,9 +490,9 @@ export const StudentScreens: React.FC = () => {
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 pb-16 rounded-b-[32px] relative shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-100">Good Morning,</p>
+              <p className="text-xs font-medium text-blue-100">{tText("शुभ दिवस,", "Good Morning,")}</p>
               <h2 className="text-xl font-extrabold flex items-center gap-1">
-                {currentUser?.fullName?.split(" ")[0] || "Student"} <span className="text-base">👋</span>
+                {currentUser?.fullName?.split(" ")[0] || tText("विद्यार्थी", "Student")} <span className="text-base">👋</span>
               </h2>
             </div>
             <img
@@ -505,7 +507,7 @@ export const StudentScreens: React.FC = () => {
         <div className="-mt-11 px-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 shadow-xl border border-zinc-100 dark:border-zinc-800 space-y-3">
             <h3 className="font-extrabold text-sm text-zinc-800 dark:text-zinc-200">
-              Where do you want to go?
+              {tText("कुठे जायचे आहे?", "Where do you want to go?")}
             </h3>
 
             <div className="space-y-2 relative">
@@ -513,7 +515,7 @@ export const StudentScreens: React.FC = () => {
               <div className="flex items-center gap-2.5 p-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
                 <div className="flex-1 text-xs">
-                  <span className="text-[10px] text-zinc-400 block">From</span>
+                  <span className="text-[10px] text-zinc-400 block">{tText("येथून (Pickup)", "From")}</span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-100">{trip.pickup}</span>
                 </div>
               </div>
@@ -522,7 +524,7 @@ export const StudentScreens: React.FC = () => {
               <div className="flex items-center gap-2.5 p-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
                 <span className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
                 <div className="flex-1 text-xs">
-                  <span className="text-[10px] text-zinc-400 block">To</span>
+                  <span className="text-[10px] text-zinc-400 block">{tText("येथे (Drop)", "To")}</span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-100">{trip.drop}</span>
                 </div>
                 <button
@@ -545,7 +547,7 @@ export const StudentScreens: React.FC = () => {
               onClick={() => setStudentScreen(4)}
               className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
             >
-              Find Auto
+              {tText("रिक्षा शोधा (Find Auto)", "Find Auto")}
             </button>
           </div>
         </div>
@@ -553,8 +555,8 @@ export const StudentScreens: React.FC = () => {
         {/* Quick Routes */}
         <div className="p-4 space-y-2.5">
           <div className="flex items-center justify-between">
-            <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">Quick Routes</h4>
-            <button className="text-xs font-bold text-blue-600 hover:underline">See All</button>
+            <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">{tText("प्रमुख मार्ग", "Quick Routes")}</h4>
+            <span className="text-[11px] font-bold text-blue-600">Lavel ↔ GIT</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
@@ -590,14 +592,14 @@ export const StudentScreens: React.FC = () => {
 
         {/* Recent Places */}
         <div className="px-4 pb-4 space-y-2">
-          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">Recent Places</h4>
+          <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">{tText("ठिकाणे (Stops)", "Recent Places")}</h4>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
             <div className="p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600">
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-xs">Gharda Institute of Technology</p>
+                <p className="font-bold text-xs">Gharda Institute of Technology (GIT)</p>
                 <p className="text-[10px] text-zinc-400">Main Campus Gate, Lavel</p>
               </div>
             </div>
@@ -606,8 +608,8 @@ export const StudentScreens: React.FC = () => {
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-xs">College Hostel</p>
-                <p className="text-[10px] text-zinc-400">Boys & Girls Hostel Complex</p>
+                <p className="font-bold text-xs">College Hostel Complex</p>
+                <p className="text-[10px] text-zinc-400">Boys & Girls Hostel</p>
               </div>
             </div>
           </div>
@@ -747,13 +749,15 @@ export const StudentScreens: React.FC = () => {
           {/* Trip Details Card */}
           <div className="p-4">
             <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
-              <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">Trip Details</h4>
+              <h4 className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
+                {tText("प्रवासाचा तपशील", "Trip Details")}
+              </h4>
 
               <div className="space-y-2 text-xs">
                 <div className="flex items-start gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 flex-shrink-0" />
                   <div>
-                    <span className="text-[10px] text-zinc-400 block">Pickup</span>
+                    <span className="text-[10px] text-zinc-400 block">{tText("पिकअप (Pickup)", "Pickup")}</span>
                     <strong className="text-zinc-800 dark:text-zinc-100">{trip.pickup}</strong>
                   </div>
                 </div>
@@ -761,7 +765,7 @@ export const StudentScreens: React.FC = () => {
                 <div className="flex items-start gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 mt-1 flex-shrink-0" />
                   <div>
-                    <span className="text-[10px] text-zinc-400 block">Drop</span>
+                    <span className="text-[10px] text-zinc-400 block">{tText("ड्रॉप (Drop)", "Drop")}</span>
                     <strong className="text-zinc-800 dark:text-zinc-100">{trip.drop}</strong>
                   </div>
                 </div>
@@ -769,11 +773,11 @@ export const StudentScreens: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
                 <div>
-                  <span className="text-[10px] text-zinc-400 block">Distance</span>
+                  <span className="text-[10px] text-zinc-400 block">{tText("अंतर", "Distance")}</span>
                   <span className="font-bold">{trip.distance}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-zinc-400 block">Estimated Time</span>
+                  <span className="text-[10px] text-zinc-400 block">{tText("अंदाजित वेळ", "Estimated Time")}</span>
                   <span className="font-bold">{trip.estimatedTime}</span>
                 </div>
               </div>
@@ -781,9 +785,9 @@ export const StudentScreens: React.FC = () => {
               <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl flex items-center justify-between border border-blue-100 dark:border-blue-900">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 dark:text-blue-200">
                   <Tag className="w-4 h-4 text-blue-600" />
-                  <span>Fare</span>
+                  <span>{tText("निश्चित भाडे", "Fare")}</span>
                 </div>
-                <span className="font-black text-base text-blue-600">₹{trip.fare} (Fixed)</span>
+                <span className="font-black text-base text-blue-600">₹{trip.fare} ({tText("निश्चित", "Fixed")})</span>
               </div>
             </div>
           </div>
@@ -798,7 +802,7 @@ export const StudentScreens: React.FC = () => {
             }}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition active:scale-[0.98]"
           >
-            Confirm Booking
+            {tText("बुकिंग निश्चित करा (Confirm Booking)", "Confirm Booking")}
           </button>
         </div>
       </div>
@@ -811,14 +815,29 @@ export const StudentScreens: React.FC = () => {
   if (studentScreen === 6) {
     return (
       <div className="flex-1 flex flex-col justify-between p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <div className="space-y-6 pt-4">
+        <div className="space-y-4 pt-2">
           {/* Big Green Checkmark */}
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-full bg-emerald-500 text-white mx-auto flex items-center justify-center shadow-lg animate-in zoom-in">
-              <Check className="w-10 h-10 stroke-[3]" />
+          <div className="text-center space-y-1.5">
+            <div className="w-14 h-14 rounded-full bg-emerald-500 text-white mx-auto flex items-center justify-center shadow-lg animate-in zoom-in">
+              <Check className="w-9 h-9 stroke-[3]" />
             </div>
-            <h2 className="text-xl font-black">Auto Booked Successfully!</h2>
-            <p className="text-xs text-zinc-500">Your driver is on the way</p>
+            <h2 className="text-xl font-black">{tText("रिक्षा यशस्वीरित्या बुक झाली!", "Auto Booked Successfully!")}</h2>
+            <p className="text-xs text-zinc-500">{tText("चालक तुमच्या दिशेने येत आहे", "Your driver is on the way")}</p>
+          </div>
+
+          {/* OLA / UBER 4-DIGIT RIDE PIN BADGE */}
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border-2 border-amber-400 flex items-center justify-between shadow-sm">
+            <div>
+              <span className="text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider block">
+                {tText("प्रवास सुरू करण्याचा पिन (Ride PIN)", "Start Ride PIN")}
+              </span>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                {tText("प्रवास सुरू करताना चालकाला द्या", "Share with driver at pickup")}
+              </p>
+            </div>
+            <div className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-black font-mono font-black text-xl tracking-widest shadow">
+              {rideOtp}
+            </div>
           </div>
 
           {/* Driver Card */}
@@ -842,40 +861,40 @@ export const StudentScreens: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2 pt-1">
               <a
-                href="tel:9876543210"
-                className="h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 text-zinc-800 dark:text-zinc-200"
+                href={`tel:${trip.driverPhone || "+919833445566"}`}
+                className="h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 text-zinc-800 dark:text-zinc-200 active:scale-95 transition"
               >
                 <Phone className="w-4 h-4 text-blue-600" />
-                <span>Call</span>
+                <span>{tText("कॉल करा (Call)", "Call")}</span>
               </a>
               <button
                 type="button"
                 onClick={() => setShowChatModal(true)}
-                className="h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 text-zinc-800 dark:text-zinc-200"
+                className="h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5 text-zinc-800 dark:text-zinc-200 active:scale-95 transition"
               >
                 <MessageSquare className="w-4 h-4 text-blue-600" />
-                <span>Chat</span>
+                <span>{tText("गप्पा (Chat)", "Chat")}</span>
               </button>
             </div>
           </div>
 
           {/* Estimated Arrival & Route Line */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div>
               <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
-                Estimated Arrival
+                {tText("अंदाजित पोहोच वेळ", "Estimated Arrival")}
               </span>
-              <p className="text-lg font-black text-blue-600">2 mins</p>
+              <p className="text-lg font-black text-blue-600">~2 mins</p>
             </div>
 
-            <div className="space-y-3 text-xs pl-2 border-l-2 border-dashed border-blue-300 dark:border-blue-800">
+            <div className="space-y-2 text-xs pl-2 border-l-2 border-dashed border-blue-300 dark:border-blue-800">
               <div className="relative">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -left-[13px] top-1" />
                 <strong className="block text-zinc-800 dark:text-zinc-100">{trip.pickup}</strong>
-                <span className="text-[11px] text-zinc-400">Driver is coming to pickup you</span>
+                <span className="text-[11px] text-zinc-400">{tText("चालक पिकअपसाठी येत आहे", "Driver is coming to pickup you")}</span>
               </div>
-              <div className="relative pt-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 absolute -left-[13px] top-3" />
+              <div className="relative pt-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 absolute -left-[13px] top-2" />
                 <strong className="block text-zinc-800 dark:text-zinc-100">{trip.drop}</strong>
               </div>
             </div>
@@ -883,18 +902,18 @@ export const StudentScreens: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2 pt-6">
+        <div className="space-y-2 pt-4">
           <button
             onClick={() => setStudentScreen(7)}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition"
           >
-            Live Tracking →
+            {tText("थेट ट्रॅकिंग सुरू करा (Live Tracking) →", "Live Tracking →")}
           </button>
           <button
             onClick={() => setStudentScreen(3)}
             className="w-full h-11 border border-red-300 dark:border-red-800 text-red-600 font-bold rounded-xl text-xs hover:bg-red-50 dark:hover:bg-red-950/30"
           >
-            Cancel Booking
+            {tText("बुकिंग रद्द करा (Cancel)", "Cancel Booking")}
           </button>
         </div>
       </div>
@@ -916,14 +935,35 @@ export const StudentScreens: React.FC = () => {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h3 className="font-black text-sm">Live Tracking</h3>
-            <div className="w-8" />
+            <h3 className="font-black text-sm">{tText("थेट ट्रॅकिंग (Live Tracking)", "Live Tracking")}</h3>
+            <button
+              onClick={submitSosAction}
+              className="px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-sm active:scale-95"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>SOS</span>
+            </button>
           </div>
 
-          <MockupMap autoPosition="middle" pillText="2 mins away" className="h-64" />
+          <MockupMap autoPosition="middle" pillText={tText("रिक्षा २ मिनिटांत येत आहे", "2 mins away")} className="h-64" />
 
-          {/* Bottom Driver Card with Stepper */}
-          <div className="p-4 space-y-4">
+          {/* Bottom Driver Card with PIN & Stepper */}
+          <div className="p-4 space-y-3">
+            {/* OLA / UBER 4-DIGIT PIN */}
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border-2 border-amber-400 flex items-center justify-between shadow-sm">
+              <div>
+                <span className="text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider block">
+                  {tText("प्रवास सुरू करण्याचा पिन (Ride PIN)", "Start Ride PIN")}
+                </span>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  {tText("रिक्षात बसल्यावर चालकाला सांगा", "Share with driver at pickup")}
+                </p>
+              </div>
+              <div className="px-3.5 py-1 rounded-xl bg-amber-400 text-black font-mono font-black text-xl tracking-widest shadow">
+                {rideOtp}
+              </div>
+            </div>
+
             <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img src={trip.driverPhoto} alt={trip.driverName} className="w-12 h-12 rounded-full object-cover border" />
@@ -936,32 +976,40 @@ export const StudentScreens: React.FC = () => {
                 </div>
               </div>
 
-              <a
-                href="tel:9876543210"
-                className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-blue-600 shadow-sm"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`tel:${trip.driverPhone || "+919833445566"}`}
+                  className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm"
+                >
+                  <Phone className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setShowChatModal(true)}
+                  className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Horizontal Stepper */}
-            <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-3">
+            <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-2.5">
               <div className="flex items-center justify-between text-xs font-bold text-zinc-500">
                 <span className="text-blue-600 flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> Pickup
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> {tText("पिकअप", "Pickup")}
                 </span>
-                <span className="text-blue-600 flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> On Trip
+                <span className="text-zinc-400 flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" /> {tText("प्रवासात", "On Trip")}
                 </span>
-                <span className="flex items-center gap-1 text-zinc-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" /> Drop
+                <span className="text-zinc-400 flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" /> {tText("ड्रॉप", "Drop")}
                 </span>
               </div>
               <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
-                <div className="w-2/3 bg-blue-600 h-full rounded-full" />
+                <div className="w-1/3 bg-blue-600 h-full rounded-full" />
               </div>
-              <p className="text-xs font-bold text-center text-zinc-800 dark:text-zinc-200 pt-1">
-                Driver is arriving at your location
+              <p className="text-xs font-bold text-center text-zinc-800 dark:text-zinc-200 pt-0.5">
+                {tText("चालक तुमच्या पिकअप पॉईंटवर पोहोचत आहे", "Driver is arriving at your location")}
               </p>
             </div>
           </div>
@@ -973,7 +1021,7 @@ export const StudentScreens: React.FC = () => {
             onClick={() => setStudentScreen(8)}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition"
           >
-            Driver Arrived / Start Trip →
+            {tText("प्रवास सुरू झाला (Start Trip) →", "Driver Arrived / Start Trip →")}
           </button>
         </div>
       </div>
@@ -995,14 +1043,20 @@ export const StudentScreens: React.FC = () => {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h3 className="font-black text-sm">Trip In Progress</h3>
-            <div className="w-8" />
+            <h3 className="font-black text-sm">{tText("प्रवास सुरू आहे (Trip In Progress)", "Trip In Progress")}</h3>
+            <button
+              onClick={submitSosAction}
+              className="px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-sm active:scale-95"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>SOS</span>
+            </button>
           </div>
 
-          <MockupMap autoPosition="approaching" pillText="On Trip" className="h-64" />
+          <MockupMap autoPosition="approaching" pillText={tText("प्रवास सुरू आहे", "On Trip")} className="h-64" />
 
           {/* Stepper Card */}
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-3">
             <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img src={trip.driverPhoto} alt={trip.driverName} className="w-12 h-12 rounded-full object-cover border" />
@@ -1012,26 +1066,34 @@ export const StudentScreens: React.FC = () => {
                 </div>
               </div>
 
-              <a
-                href="tel:9876543210"
-                className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-blue-600 shadow-sm"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`tel:${trip.driverPhone || "+919833445566"}`}
+                  className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm"
+                >
+                  <Phone className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setShowChatModal(true)}
+                  className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Stepper */}
             <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-3">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-emerald-600 flex items-center gap-1">✓ Pickup</span>
-                <span className="text-blue-600 flex items-center gap-1">● On Trip</span>
-                <span className="text-zinc-400 flex items-center gap-1">○ Drop</span>
+                <span className="text-emerald-600 flex items-center gap-1">✓ {tText("पिकअप", "Pickup")}</span>
+                <span className="text-blue-600 flex items-center gap-1">● {tText("प्रवासात", "On Trip")}</span>
+                <span className="text-zinc-400 flex items-center gap-1">○ {tText("ड्रॉप", "Drop")}</span>
               </div>
               <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
                 <div className="w-5/6 bg-blue-600 h-full rounded-full" />
               </div>
               <p className="text-xs font-bold text-center text-zinc-800 dark:text-zinc-200 pt-1">
-                Heading towards Gharda Institute of Technology
+                {tText(`${trip.drop} कडे जात आहोत`, `Heading towards ${trip.drop}`)}
               </p>
             </div>
           </div>
@@ -1043,7 +1105,7 @@ export const StudentScreens: React.FC = () => {
             onClick={() => setStudentScreen(9)}
             className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md transition"
           >
-            Complete Trip →
+            {tText("प्रवास पूर्ण झाला (Complete Trip) →", "Complete Trip →")}
           </button>
         </div>
       </div>
@@ -1298,7 +1360,7 @@ export const StudentScreens: React.FC = () => {
       <div className="flex-1 flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
         {/* Header */}
         <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-          <h3 className="font-black text-base">Profile</h3>
+          <h3 className="font-black text-base">{tText("माझे प्रोफाइल", "Profile")}</h3>
         </div>
 
         <div className="p-4 space-y-4">
@@ -1310,8 +1372,8 @@ export const StudentScreens: React.FC = () => {
               className="w-12 h-12 rounded-full object-cover border"
             />
             <div>
-              <h4 className="font-extrabold text-sm">{currentUser?.fullName || "Student Profile"}</h4>
-              <p className="text-xs text-zinc-500">Student • GIT Campus</p>
+              <h4 className="font-extrabold text-sm">{currentUser?.fullName || tText("विद्यार्थी", "Student")}</h4>
+              <p className="text-xs text-zinc-500">{tText("विद्यार्थी • जीआयटी लावेल", "Student • GIT Campus")}</p>
               <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{currentUser?.email || currentUser?.phone || "Lavel Corridor"}</p>
             </div>
           </div>
@@ -1319,12 +1381,11 @@ export const StudentScreens: React.FC = () => {
           {/* Menu Items */}
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
             {[
-              { title: "My Bookings", icon: Calendar, action: () => setStudentScreen(11) },
-              { title: "Saved Places", icon: MapPin, action: () => {} },
-              { title: "Payment Methods", icon: CreditCard, action: () => {} },
-              { title: "Notifications", icon: Bell, action: () => {} },
-              { title: "Help & Support", icon: HelpCircle, action: () => setStudentScreen(13) },
-              { title: "About Ride Mitra", icon: Info, action: () => {} },
+              { title: tText("माझी बुकिंग्ज", "My Bookings"), icon: Calendar, action: () => setStudentScreen(11) },
+              { title: tText("जतन केलेली ठिकाणे", "Saved Places"), icon: MapPin, action: () => {} },
+              { title: tText("सूचना", "Notifications"), icon: Bell, action: () => {} },
+              { title: tText("मदत व तक्रार केंद्र", "Help & Support"), icon: HelpCircle, action: () => setStudentScreen(13) },
+              { title: tText("रिक्षा मित्र बद्दल", "About Ride Mitra"), icon: Info, action: () => {} },
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
@@ -1352,7 +1413,7 @@ export const StudentScreens: React.FC = () => {
             className="w-full p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-red-200 dark:border-red-900 text-red-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-red-50"
           >
             <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            <span>{tText("लॉगआउट करा (Logout)", "Logout")}</span>
           </button>
         </div>
       </div>
@@ -1373,7 +1434,7 @@ export const StudentScreens: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h3 className="font-black text-sm">Help & Support</h3>
+          <h3 className="font-black text-sm">{tText("मदत व तक्रार केंद्र", "Help & Support")}</h3>
           <div className="w-8" />
         </div>
 
@@ -1386,8 +1447,8 @@ export const StudentScreens: React.FC = () => {
               <MessageSquare className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h4 className="font-extrabold text-xs">Chat with Support</h4>
-              <p className="text-[11px] text-zinc-400">Get help from our team</p>
+              <h4 className="font-extrabold text-xs">{tText("सपोर्टशी थेट चॅट करा", "Chat with Support")}</h4>
+              <p className="text-[11px] text-zinc-400">{tText("आमच्या टीमशी त्वरित संपर्क", "Get help from our team")}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-400" />
           </button>
@@ -1400,7 +1461,7 @@ export const StudentScreens: React.FC = () => {
               <Phone className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h4 className="font-extrabold text-xs">Call Support</h4>
+              <h4 className="font-extrabold text-xs">{tText("सपोर्ट हेल्पलाईन कॉल", "Call Support")}</h4>
               <p className="text-[11px] text-zinc-400">+91 98765 43210</p>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-400" />
@@ -1411,19 +1472,8 @@ export const StudentScreens: React.FC = () => {
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h4 className="font-extrabold text-xs">Report an Issue</h4>
-              <p className="text-[11px] text-zinc-400">Safety, payment or other issues</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
-          </div>
-
-          <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-3.5 text-left shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-extrabold text-xs">FAQs</h4>
-              <p className="text-[11px] text-zinc-400">Common questions and answers</p>
+              <h4 className="font-extrabold text-xs">{tText("तक्रार नोंदवा", "Report an Issue")}</h4>
+              <p className="text-[11px] text-zinc-400">{tText("सुरक्षा किंवा भाडे विषयक समस्या", "Safety, payment or other issues")}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-400" />
           </div>

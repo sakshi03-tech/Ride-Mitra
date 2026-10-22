@@ -49,6 +49,7 @@ export interface TripData {
   fare: number;
   date: string;
   driverName: string;
+  driverPhone?: string;
   driverRating: number;
   driverAuto: string;
   driverPhoto: string;
@@ -125,6 +126,10 @@ interface MockupContextType {
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string }>;
   smsNotification: { phone: string; code: string; time: string } | null;
   dismissSmsNotification: () => void;
+  // Ola/Uber Ride PIN & Live verification
+  rideOtp: string;
+  verifyRideStartOtp: (pin: string) => boolean;
+  tText: (mr: string, en: string) => string;
   logout: () => Promise<void>;
 }
 
@@ -199,15 +204,25 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     tripsCount: number;
     trips: Array<{ route: string; fare: string; time: string; status: string }>;
   }>({
-    totalAmount: 150,
-    tripsCount: 5,
+    totalAmount: 0,
+    tripsCount: 0,
     trips: [],
   });
   const [activeRideId, setActiveRideId] = useState<string | null>(null);
+  const [rideOtp, setRideOtp] = useState<string>(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [smsNotification, setSmsNotification] = useState<{ phone: string; code: string; time: string } | null>(null);
   const [sentOtpMap, setSentOtpMap] = useState<Record<string, string>>({});
 
   const dismissSmsNotification = () => setSmsNotification(null);
+
+  // Instant reactive translation helper
+  const tText = (mr: string, en: string): string => {
+    return currentLanguage.startsWith("mr") ? mr : en;
+  };
+
+  const verifyRideStartOtp = (pin: string): boolean => {
+    return pin.trim() === rideOtp.trim();
+  };
 
   // Language toggle
   const toggleLanguage = () => {
@@ -244,6 +259,10 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const pickupStop = realStops.find((s) => s.name_en === trip.pickup || s.name_mr === trip.pickup) || realStops[0];
       const dropStop = realStops.find((s) => s.name_en === trip.drop || s.name_mr === trip.drop) || realStops[1];
 
+      // Generate a fresh 4-digit Ola/Uber ride PIN
+      const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      setRideOtp(newOtp);
+
       const created = await createRealRide({
         student_id: currentUser?.id || "student-user-" + Date.now(),
         pickup_stop: pickupStop?.id || "11111111-1111-1111-1111-111111111101",
@@ -269,6 +288,20 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (activeRideId) {
       await updateRealRideStatus(activeRideId, "completed");
     }
+    const completedFare = trip.fare || 30;
+    setDriverEarningsSummary((prev) => ({
+      totalAmount: prev.totalAmount + completedFare,
+      tripsCount: prev.tripsCount + 1,
+      trips: [
+        {
+          route: `${trip.pickup} ➔ ${trip.drop}`,
+          fare: `₹${completedFare}`,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          status: "Completed",
+        },
+        ...prev.trips,
+      ],
+    }));
     await refreshRealData();
   };
 
@@ -743,6 +776,10 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Language
         currentLanguage,
         toggleLanguage,
+        tText,
+        // Ride OTP verification (Ola/Uber 4-digit PIN)
+        rideOtp,
+        verifyRideStartOtp,
         // Real Auth
         currentUser,
         authLoading,
