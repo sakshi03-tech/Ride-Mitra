@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMockup } from "./MockupContext";
 import { MockupMap } from "./MockupMap";
+import { validateAadhaar } from "@/lib/aadhaar";
 import {
   Car,
   GraduationCap,
@@ -22,6 +23,7 @@ import {
   FileText,
   ShieldCheck,
   LogOut,
+  Image,
 } from "lucide-react";
 
 export const DriverScreens: React.FC = () => {
@@ -47,6 +49,8 @@ export const DriverScreens: React.FC = () => {
     logout,
     completeCurrentRide,
     driverEarningsSummary,
+    registerDriverWithDocs,
+    driverDocs,
   } = useMockup();
 
   // Screen 2 tabs & auth state
@@ -64,10 +68,17 @@ export const DriverScreens: React.FC = () => {
   const [regPhone, setRegPhone] = useState("");
   const [regAuto, setRegAuto] = useState("");
   const [regLicense, setRegLicense] = useState("");
+  const [regAadhaar, setRegAadhaar] = useState("");
+  const [dlFileName, setDlFileName] = useState("driving_licence_scan.jpg");
   const [rcFileName, setRcFileName] = useState("rc_book_scan.jpg");
+  const [aadhaarFileName, setAadhaarFileName] = useState("aadhaar_card_front_back.jpg");
+  const [regSuccess, setRegSuccess] = useState(false);
+  const [regSubmitting, setRegSubmitting] = useState(false);
 
   // Screen 8 earnings tab
   const [earningsTab, setEarningsTab] = useState<"today" | "week" | "month">("today");
+
+  const aadhaarValidation = validateAadhaar(regAadhaar);
 
   const handleSendDriverOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,17 +113,30 @@ export const DriverScreens: React.FC = () => {
     }
   };
 
-  const handleDriverRegistration = (e: React.FormEvent) => {
+  const handleDriverRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!aadhaarValidation.isValid && regAadhaar.replace(/\D/g, "").length !== 12) {
+      setAuthError("कृपया वैध १२ अंकी आधार नंबर टाका");
+      return;
+    }
+    setRegSubmitting(true);
     const name = regName.trim() || "Auto Driver";
     const auto = regAuto.trim() || "MH 08 AB 1234";
-    setTrip((prev) => ({
-      ...prev,
-      driverName: name,
-      driverAuto: `${auto} • Bajaj RE`,
-    }));
-    loginWithPhoneOtp(regPhone, "123456", "driver", name);
-    setDriverScreen(4);
+    const license = regLicense.trim() || "MH08 20210012345";
+
+    await registerDriverWithDocs({
+      fullName: name,
+      phone: regPhone,
+      autoNumber: auto,
+      dlNumber: license,
+      dlUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
+      rcUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+      aadhaarNumber: regAadhaar,
+      aadhaarUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80",
+    });
+
+    setRegSubmitting(false);
+    setRegSuccess(true);
   };
 
   /* =========================================================================
@@ -173,9 +197,26 @@ export const DriverScreens: React.FC = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-extrabold text-base leading-tight">I am a Driver</h3>
-              <p className="text-xs text-zinc-500">Find passengers</p>
+              <p className="text-xs text-zinc-500">Find passengers & earn</p>
             </div>
             <ArrowRight className="w-5 h-5 text-orange-600" />
+          </button>
+
+          {/* I am an Admin */}
+          <button
+            onClick={() => {
+              setFlow("admin");
+            }}
+            className="w-full p-3.5 rounded-2xl bg-zinc-800/90 hover:bg-zinc-800 text-white flex items-center gap-4 shadow-xl border border-zinc-700 hover:border-amber-400 hover:scale-[1.02] transition text-left active:scale-[0.98]"
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-extrabold text-base leading-tight text-white">I am an Admin</h3>
+              <p className="text-xs text-zinc-400">कॉलेज व चालक प्रशासक</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-amber-400" />
           </button>
 
           <p className="text-[11px] text-zinc-400 text-center pt-2">
@@ -400,9 +441,69 @@ export const DriverScreens: React.FC = () => {
   }
 
   /* =========================================================================
-   * SCREEN 3: DRIVER REGISTRATION
+   * SCREEN 3: DRIVER REGISTRATION WITH FULL DOCUMENT UPLOAD & AADHAAR VERIFICATION
    * ========================================================================= */
   if (driverScreen === 3) {
+    if (regSuccess) {
+      return (
+        <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-y-auto justify-between">
+          <div className="pt-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-black">नोंदणी यशस्वी झाली!</h2>
+            <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+              तुमची कागदपत्रे व आधार कार्ड यशस्वीरीत्या नोंदणीकृत झाले आहेत. प्रशासकीय पडताळणीनंतर तुमचे खाते सक्रिय होईल.
+            </p>
+
+            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-left space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">नाव:</span>
+                <span className="font-bold">{regName || "Auto Driver"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">रिक्षा नंबर:</span>
+                <span className="font-bold font-mono">{regAuto.toUpperCase() || "MH 08 AB 1234"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">आधार पडताळणी:</span>
+                <span className="font-bold text-emerald-600">✓ यशस्वी (Verhoeff Verified)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">कागदपत्रे:</span>
+                <span className="font-bold text-blue-600">DL, RC, Aadhaar अपलोड केले</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-zinc-200 dark:border-zinc-800">
+                <span className="text-zinc-500">खाते स्थिती:</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-[10px]">
+                  प्रलंबित (Pending Admin Approval)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 pb-6">
+            <button
+              onClick={() => {
+                setDriverScreen(4);
+              }}
+              className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition"
+            >
+              चालक डॅशबोर्डवर जा (Driver Dashboard) →
+            </button>
+            <button
+              onClick={() => {
+                setFlow("admin");
+              }}
+              className="w-full h-11 bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 font-bold rounded-xl text-xs transition border border-zinc-200 dark:border-zinc-800"
+            >
+              प्रशासकीय पडताळणी कक्षात पाहा (View in Admin Panel)
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex-1 flex flex-col p-6 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-y-auto">
         <button
@@ -414,78 +515,180 @@ export const DriverScreens: React.FC = () => {
 
         <div className="space-y-1 mb-5">
           <h2 className="text-2xl font-black">Driver Registration</h2>
-          <p className="text-xs text-zinc-500">नवीन रिक्षा चालकांची कागदपत्रे व नोंदणी</p>
+          <p className="text-xs text-zinc-500">
+            नवीन रिक्षा चालकांची कागदपत्रे व आधार पडताळणी
+          </p>
         </div>
+
+        {authError && (
+          <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{authError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleDriverRegistration} className="space-y-4">
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Full Name (पूर्ण नाव)</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">
+              Full Name (पूर्ण नाव) *
+            </label>
             <input
               type="text"
               required
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder="उदा. रमेश कदम"
               className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Mobile Number (मोबाईल नंबर)</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">
+              Mobile Number (मोबाईल नंबर) *
+            </label>
             <input
               type="tel"
               required
               value={regPhone}
               onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              placeholder="Enter 10-digit mobile number"
+              placeholder="उदा. 9833445566"
               className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Auto Number (रिक्षा क्रमांक)</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">
+              Auto Number (रिक्षा क्रमांक) *
+            </label>
             <input
               type="text"
               required
               value={regAuto}
-              onChange={(e) => setRegAuto(e.target.value)}
-              placeholder="e.g. MH 08 AB 1234"
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+              onChange={(e) => setRegAuto(e.target.value.toUpperCase())}
+              placeholder="उदा. MH 08 CD 9012"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
             />
           </div>
 
+          {/* AADHAAR CARD NUMBER WITH VERHOEFF CHECKSUM */}
+          <div className="p-3.5 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border-2 border-orange-200 dark:border-orange-900/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-extrabold text-orange-950 dark:text-orange-200 block">
+                🪪 आधार कार्ड नंबर (Aadhaar Card) *
+              </label>
+              <span className="text-[10px] text-zinc-500 font-medium">१२ अंक</span>
+            </div>
+            <input
+              type="text"
+              required
+              value={regAadhaar}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+                setRegAadhaar(formatted);
+              }}
+              placeholder="उदा. 3675 9834 6012"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-extrabold font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            {/* Live Verification Feedback */}
+            {regAadhaar.length > 0 && (
+              <div
+                className={`text-[11px] font-bold flex items-center gap-1.5 pt-1 ${
+                  aadhaarValidation.isValid
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {aadhaarValidation.isValid ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <span>✓ वैध आधार कार्ड पडताळणी पूर्ण (Aadhaar Valid)</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{aadhaarValidation.message}</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Driving License No (परवाना क्रमांक)</label>
+            <label className="text-[11px] font-bold text-zinc-500 block mb-1">
+              Driving License No (परवाना क्रमांक) *
+            </label>
             <input
               type="text"
               required
               value={regLicense}
-              onChange={(e) => setRegLicense(e.target.value)}
-              placeholder="e.g. MH08 20210012345"
-              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+              onChange={(e) => setRegLicense(e.target.value.toUpperCase())}
+              placeholder="उदा. MH08 20210012345"
+              className="w-full h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono"
             />
           </div>
 
-          <div>
-            <label className="text-[11px] font-bold text-zinc-500 block mb-1">Upload RC / Permit (वाहन परवाना प्रत)</label>
-            <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
-              <span className="text-xs text-zinc-500 flex items-center gap-2">
-                <Upload className="w-4 h-4 text-orange-500" /> {rcFileName}
-              </span>
-              <button
-                type="button"
-                className="px-3 py-1.5 bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 text-[11px] font-bold rounded-lg"
-              >
-                File Selected
-              </button>
+          {/* DOCUMENT UPLOADS */}
+          <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+              आवश्यक कागदपत्रे अपलोड (Upload Documents)
+            </p>
+
+            {/* 1. Aadhaar Card Photo Upload */}
+            <div>
+              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
+                १. आधार कार्ड प्रत (Aadhaar Card Front/Back)
+              </label>
+              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
+                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
+                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                  <span className="truncate">{aadhaarFileName}</span>
+                </span>
+                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
+                  ✓ निवडले
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Driving License Upload */}
+            <div>
+              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
+                २. ड्रायव्हिंग लायसन्स (Driving Licence Photo)
+              </label>
+              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
+                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
+                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                  <span className="truncate">{dlFileName}</span>
+                </span>
+                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
+                  ✓ निवडले
+                </span>
+              </div>
+            </div>
+
+            {/* 3. RC Book Upload */}
+            <div>
+              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
+                ३. वाहन आरसी बुक (Vehicle RC / Permit)
+              </label>
+              <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
+                <span className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-2 truncate pr-2">
+                  <Upload className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                  <span className="truncate">{rcFileName}</span>
+                </span>
+                <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold rounded-lg flex-shrink-0">
+                  ✓ निवडले
+                </span>
+              </div>
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition mt-6 active:scale-[0.98]"
+            disabled={regSubmitting}
+            className="w-full h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-extrabold rounded-xl text-sm shadow-md transition mt-6 active:scale-[0.98]"
           >
-            Submit Registration (नोंदणी पूर्ण करा)
+            {regSubmitting ? "नोंदणी होत आहे..." : "नोंदणी सबमिट करा (Submit Registration)"}
           </button>
         </form>
       </div>
@@ -525,6 +728,29 @@ export const DriverScreens: React.FC = () => {
             />
           </button>
         </div>
+
+        {/* Verification Status Banner */}
+        {driverDocs.status === "pending" && (
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <div>
+                <p className="text-[11px] font-extrabold text-amber-900 dark:text-amber-200">
+                  कागदपत्रे पडताळणी प्रलंबित (Pending Approval)
+                </p>
+                <p className="text-[10px] text-zinc-500">
+                  आधार व लायसन्स प्रशासकाकडे मंजुरीसाठी पाठवले आहे.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setFlow("admin")}
+              className="px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-500 text-black text-[10px] font-black whitespace-nowrap shadow-sm"
+            >
+              Admin तपासणी →
+            </button>
+          </div>
+        )}
 
         {/* Metrics Row */}
         <div className="p-4">

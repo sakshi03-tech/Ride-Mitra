@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./AuthContext";
+import { validateAadhaar } from "@/lib/aadhaar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { CheckCircle2, ShieldCheck, AlertCircle, FileText } from "lucide-react";
+import { CheckCircle2, ShieldCheck, AlertCircle, FileText, Upload } from "lucide-react";
 
 export const DriverRegisterPage: React.FC = () => {
   const { t } = useTranslation();
@@ -17,11 +18,15 @@ export const DriverRegisterPage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [autoNumber, setAutoNumber] = useState("");
   const [seatCapacity, setSeatCapacity] = useState(3);
+  const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [licenceUploaded, setLicenceUploaded] = useState(false);
   const [rcUploaded, setRcUploaded] = useState(false);
+  const [aadhaarUploaded, setAadhaarUploaded] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const aadhaarCheck = validateAadhaar(aadhaarNumber);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,14 +37,21 @@ export const DriverRegisterPage: React.FC = () => {
       return;
     }
 
+    if (aadhaarNumber.replace(/\D/g, "").length !== 12 && !aadhaarCheck.isValid) {
+      setErrorMsg("कृपया वैध १२ अंकी आधार नंबर टाका");
+      return;
+    }
+
     setLoading(true);
     const res = await registerDriver({
       fullName,
       phone,
       autoNumber,
       seatCapacity,
-      licenceUrl: licenceUploaded ? "https://storage.ride-mitra.local/licence-mock.jpg" : undefined,
-      rcUrl: rcUploaded ? "https://storage.ride-mitra.local/rc-mock.jpg" : undefined,
+      aadhaarNumber,
+      aadhaarUrl: aadhaarUploaded ? "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80" : undefined,
+      licenceUrl: licenceUploaded ? "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80" : undefined,
+      rcUrl: rcUploaded ? "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80" : undefined,
     });
     setLoading(false);
 
@@ -172,35 +184,90 @@ export const DriverRegisterPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Document upload simulation */}
+              {/* Aadhaar Number with Verhoeff validation */}
+              <div className="p-3.5 rounded-xl border-2 border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black text-amber-950 dark:text-amber-200">
+                    आधार कार्ड नंबर (Aadhaar Number) *
+                  </label>
+                  <span className="text-[10px] text-muted-foreground font-semibold">१२ अंक</span>
+                </div>
+                <Input
+                  type="text"
+                  required
+                  value={aadhaarNumber}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                    const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+                    setAadhaarNumber(formatted);
+                  }}
+                  placeholder="3675 9834 6012"
+                  className="font-mono tracking-wider font-bold text-base bg-background"
+                />
+                {aadhaarNumber.length > 0 && (
+                  <p
+                    className={`text-xs font-bold flex items-center gap-1 pt-1 ${
+                      aadhaarCheck.isValid ? "text-emerald-600" : "text-amber-600"
+                    }`}
+                  >
+                    {aadhaarCheck.isValid ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>✓ वैध आधार कार्ड (Verhoeff Verified)</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>{aadhaarCheck.message}</span>
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              {/* Document upload section */}
               <div className="pt-2 border-t space-y-2">
                 <label className="block text-sm font-bold text-muted-foreground">
-                  कागदपत्रे अपलोड (ऐच्छिक)
+                  कागदपत्रे अपलोड (Upload Required Documents)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAadhaarUploaded(!aadhaarUploaded)}
+                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
+                      aadhaarUploaded
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                        : "border-input bg-background hover:border-rickshaw-400"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>{aadhaarUploaded ? "✓ आधार जोडले" : "+ आधार कार्ड"}</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setLicenceUploaded(!licenceUploaded)}
-                    className={`p-3 rounded-xl border-2 text-xs font-bold flex flex-col items-center gap-1 transition ${
+                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
                       licenceUploaded
                         ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
                         : "border-input bg-background hover:border-rickshaw-400"
                     }`}
                   >
-                    <FileText className="w-5 h-5" />
-                    <span>{licenceUploaded ? "✓ लायसन्स जोडले" : "+ ड्रायव्हिंग लायसन्स"}</span>
+                    <FileText className="w-4 h-4" />
+                    <span>{licenceUploaded ? "✓ लायसन्स जोडले" : "+ लायसन्स"}</span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setRcUploaded(!rcUploaded)}
-                    className={`p-3 rounded-xl border-2 text-xs font-bold flex flex-col items-center gap-1 transition ${
+                    className={`p-2.5 rounded-xl border-2 text-[11px] font-bold flex flex-col items-center gap-1 transition ${
                       rcUploaded
                         ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
                         : "border-input bg-background hover:border-rickshaw-400"
                     }`}
                   >
-                    <FileText className="w-5 h-5" />
-                    <span>{rcUploaded ? "✓ आरसी बुक जोडले" : "+ रिक्षा आरसी (RC)"}</span>
+                    <FileText className="w-4 h-4" />
+                    <span>{rcUploaded ? "✓ आरसी जोडली" : "+ वाहन आरसी"}</span>
                   </button>
                 </div>
               </div>

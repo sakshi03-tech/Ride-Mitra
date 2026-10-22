@@ -3,6 +3,7 @@ import { MockupProvider, useMockup } from "./MockupContext";
 import { MobileShell } from "./MobileShell";
 import { StudentScreens } from "./StudentScreens";
 import { DriverScreens } from "./DriverScreens";
+import { AdminScreens } from "./AdminScreens";
 import { ChatModal } from "./ChatModal";
 
 const AppContent: React.FC = () => {
@@ -26,7 +27,7 @@ const AppContent: React.FC = () => {
       showBottomNav = true;
       activeNavTab = "support";
     }
-  } else {
+  } else if (flow === "driver") {
     if (driverScreen === 4) {
       showBottomNav = true;
       activeNavTab = "home";
@@ -38,11 +39,17 @@ const AppContent: React.FC = () => {
 
   return (
     <MobileShell
-      showBottomNav={showBottomNav}
+      showBottomNav={showBottomNav && flow !== "admin"}
       activeNavTab={activeNavTab}
       themeColor={flow === "student" ? "blue" : "orange"}
     >
-      {flow === "student" ? <StudentScreens /> : <DriverScreens />}
+      {flow === "student" ? (
+        <StudentScreens />
+      ) : flow === "driver" ? (
+        <DriverScreens />
+      ) : (
+        <AdminScreens />
+      )}
       <ChatModal />
     </MobileShell>
   );

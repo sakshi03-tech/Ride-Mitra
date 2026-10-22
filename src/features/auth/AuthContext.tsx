@@ -21,7 +21,10 @@ interface AuthContextType {
     autoNumber: string;
     seatCapacity: number;
     licenceUrl?: string;
+    dlNumber?: string;
     rcUrl?: string;
+    aadhaarNumber?: string;
+    aadhaarUrl?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   switchDemoUser: (targetRole: UserRole, id?: string) => void;
   logout: () => void;
@@ -177,7 +180,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     autoNumber: string;
     seatCapacity: number;
     licenceUrl?: string;
+    dlNumber?: string;
     rcUrl?: string;
+    aadhaarNumber?: string;
+    aadhaarUrl?: string;
   }) => {
     const db = getDemoDB();
 
@@ -205,8 +211,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile_id: driverId,
       auto_number: data.autoNumber.toUpperCase(),
       seat_capacity: data.seatCapacity,
+      dl_number: data.dlNumber || undefined,
       licence_url: data.licenceUrl,
       rc_url: data.rcUrl,
+      aadhaar_number: data.aadhaarNumber,
+      aadhaar_url: data.aadhaarUrl,
       status: "pending", // Starts as pending per section 3.2
       is_online: false,
       queue_position: db.drivers.length + 1,

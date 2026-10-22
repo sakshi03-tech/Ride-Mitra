@@ -38,14 +38,25 @@ export const MobileShell: React.FC<MobileShellProps> = ({
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col justify-start items-center">
       {/* Floating Navigator Pill for quick role switching and screen selection */}
-      <div className="fixed top-3 right-3 z-50">
+      <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
+        <button
+          onClick={useMockup().toggleLanguage}
+          className="px-2.5 py-1.5 rounded-full bg-zinc-900/90 text-amber-300 shadow-xl text-xs font-bold border border-zinc-700/80 backdrop-blur-md flex items-center gap-1 hover:scale-105 active:scale-95 transition"
+          title="Change Language"
+        >
+          <span>🌐</span>
+          <span>{useMockup().currentLanguage.startsWith("mr") ? "मराठी" : "EN"}</span>
+        </button>
+
         <button
           onClick={() => setShowDevPanel(!showDevPanel)}
           className="px-3.5 py-1.5 rounded-full bg-zinc-900/90 text-white shadow-xl text-xs font-bold border border-zinc-700/80 backdrop-blur-md flex items-center gap-1.5 hover:scale-105 active:scale-95 transition"
           title="Switch Role or Screen"
         >
           <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-          <span>{flow === "student" ? "🎓 Student" : "🛺 Driver"}</span>
+          <span>
+            {flow === "student" ? "🎓 Student" : flow === "driver" ? "🛺 Driver" : "🛡️ Admin"}
+          </span>
         </button>
       </div>
 
@@ -67,7 +78,7 @@ export const MobileShell: React.FC<MobileShellProps> = ({
             </div>
 
             {/* Role Switch */}
-            <div className="grid grid-cols-2 p-1 bg-zinc-800 rounded-xl text-xs font-bold">
+            <div className="grid grid-cols-3 p-1 bg-zinc-800 rounded-xl text-xs font-bold">
               <button
                 onClick={() => {
                   setFlow("student");
@@ -78,7 +89,7 @@ export const MobileShell: React.FC<MobileShellProps> = ({
                   flow === "student" ? "bg-blue-600 text-white" : "text-zinc-400"
                 }`}
               >
-                🎓 Student Flow
+                🎓 Student
               </button>
               <button
                 onClick={() => {
@@ -90,7 +101,18 @@ export const MobileShell: React.FC<MobileShellProps> = ({
                   flow === "driver" ? "bg-orange-500 text-white" : "text-zinc-400"
                 }`}
               >
-                🛺 Driver Flow
+                🛺 Driver
+              </button>
+              <button
+                onClick={() => {
+                  setFlow("admin");
+                  setShowDevPanel(false);
+                }}
+                className={`py-2 rounded-lg transition ${
+                  flow === "admin" ? "bg-amber-400 text-black font-extrabold" : "text-zinc-400"
+                }`}
+              >
+                🛡️ Admin
               </button>
             </div>
 
@@ -129,7 +151,8 @@ export const MobileShell: React.FC<MobileShellProps> = ({
                         {name}
                       </button>
                     ))
-                  : [
+                  : flow === "driver"
+                  ? [
                       "1. Welcome",
                       "2. Driver Login",
                       "3. Driver Registration",
@@ -150,6 +173,22 @@ export const MobileShell: React.FC<MobileShellProps> = ({
                             ? "bg-orange-500 border-orange-400 text-white font-bold"
                             : "bg-zinc-800/80 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800"
                         }`}
+                      >
+                        {name}
+                      </button>
+                    ))
+                  : [
+                      "1. Admin Login",
+                      "2. Drivers & Aadhaar Verification",
+                      "3. Stops & Fares",
+                      "4. Overview & Analytics",
+                    ].map((name, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setShowDevPanel(false);
+                        }}
+                        className="p-2 rounded-xl text-left text-xs font-semibold border bg-zinc-800/80 border-zinc-700/60 text-amber-300 hover:bg-zinc-800"
                       >
                         {name}
                       </button>

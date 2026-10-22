@@ -37,7 +37,10 @@ export interface Driver {
   profile_id: string;
   auto_number: string;
   licence_url?: string | null;
+  dl_number?: string | null;
   rc_url?: string | null;
+  aadhaar_number?: string | null;
+  aadhaar_url?: string | null;
   seat_capacity: number;
   status: DriverStatus;
   rejection_reason?: string | null;

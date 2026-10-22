@@ -172,9 +172,26 @@ export const StudentScreens: React.FC = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-extrabold text-base leading-tight">I am a Driver</h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Find passengers</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Find passengers & earn</p>
             </div>
             <ArrowRight className="w-5 h-5 text-zinc-400" />
+          </button>
+
+          {/* I am an Admin */}
+          <button
+            onClick={() => {
+              setFlow("admin");
+            }}
+            className="w-full p-3.5 rounded-2xl bg-zinc-800/90 hover:bg-zinc-800 text-white flex items-center gap-4 shadow-xl border border-zinc-700 hover:border-amber-400 hover:scale-[1.02] transition text-left active:scale-[0.98]"
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center">
+              <ShieldAlert className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-extrabold text-base leading-tight text-white">I am an Admin</h3>
+              <p className="text-xs text-zinc-400">कॉलेज व चालक प्रशासक</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-amber-400" />
           </button>
 
           <p className="text-[11px] text-zinc-400 text-center pt-2">

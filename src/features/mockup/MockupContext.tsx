@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { getDemoDB, saveDemoDB } from "@/lib/supabase";
+import i18n from "@/lib/i18n";
+import { validateAadhaar } from "@/lib/aadhaar";
 import {
   fetchRealStops,
   fetchRealFares,
@@ -15,7 +18,7 @@ import {
   RealRide,
 } from "@/lib/databaseService";
 
-export type FlowType = "student" | "driver";
+export type FlowType = "student" | "driver" | "admin";
 
 export interface UserProfile {
   id: string;
@@ -23,6 +26,19 @@ export interface UserProfile {
   phone?: string;
   fullName: string;
   role: "student" | "driver" | "admin";
+}
+
+export interface DriverDocsState {
+  fullName: string;
+  phone: string;
+  autoNumber: string;
+  dlNumber: string;
+  dlUrl: string;
+  rcUrl: string;
+  aadhaarNumber: string;
+  aadhaarUrl: string;
+  aadhaarVerified: boolean;
+  status: "pending" | "approved" | "rejected" | "suspended";
 }
 
 export interface TripData {
@@ -47,6 +63,8 @@ interface MockupContextType {
   setStudentScreen: (screen: number) => void;
   driverScreen: number;
   setDriverScreen: (screen: number) => void;
+  adminScreen: number;
+  setAdminScreen: (screen: number) => void;
   driverOnline: boolean;
   setDriverOnline: (online: boolean) => void;
   driverOnTripStep: "reached_pickup" | "start_trip" | "complete_trip";
@@ -76,12 +94,32 @@ interface MockupContextType {
   submitRatingAction: (stars: number, tags: string[], comment?: string) => Promise<void>;
   submitSosAction: () => Promise<void>;
   refreshRealData: () => Promise<void>;
+  // Driver documents & verification state
+  driverDocs: DriverDocsState;
+  registerDriverWithDocs: (data: {
+    fullName: string;
+    phone: string;
+    autoNumber: string;
+    dlNumber: string;
+    dlUrl?: string;
+    rcUrl?: string;
+    aadhaarNumber: string;
+    aadhaarUrl?: string;
+  }) => Promise<boolean>;
+  // Admin functions
+  loginAdmin: (passcodeOrPassword: string) => Promise<boolean>;
+  adminApproveDriver: (profileId: string) => void;
+  adminRejectDriver: (profileId: string, reason?: string) => void;
+  adminSuspendDriver: (profileId: string) => void;
+  // Language support
+  currentLanguage: string;
+  toggleLanguage: () => void;
   // Real Auth state & methods
   currentUser: UserProfile | null;
   authLoading: boolean;
   authError: string | null;
   setAuthError: (err: string | null) => void;
-  loginWithEmail: (email: string, pass: string, role: "student" | "driver") => Promise<boolean>;
+  loginWithEmail: (email: string, pass: string, role: "student" | "driver" | "admin") => Promise<boolean>;
   signUpWithEmail: (email: string, pass: string, fullName: string, role: "student" | "driver") => Promise<boolean>;
   loginWithPhoneOtp: (phone: string, otp: string, role: "student" | "driver", fullName?: string) => Promise<boolean>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string }>;
@@ -109,6 +147,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [flow, setFlow] = useState<FlowType>("student");
   const [studentScreen, setStudentScreen] = useState<number>(1);
   const [driverScreen, setDriverScreen] = useState<number>(1);
+  const [adminScreen, setAdminScreen] = useState<number>(1);
   const [driverOnline, setDriverOnline] = useState<boolean>(true);
   const [driverOnTripStep, setDriverOnTripStep] = useState<"reached_pickup" | "start_trip" | "complete_trip">("reached_pickup");
   const [trip, setTrip] = useState<TripData>(defaultTrip);
@@ -121,6 +160,21 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [ratingTags, setRatingTags] = useState<string[]>(["Safe Driving", "Polite"]);
   const [ratingComment, setRatingComment] = useState<string>("");
   const [deviceView, setDeviceView] = useState<"mobile" | "responsive">("mobile");
+  const [currentLanguage, setCurrentLanguage] = useState<string>(i18n.language || "mr");
+
+  // Driver documents & verification state
+  const [driverDocs, setDriverDocs] = useState<DriverDocsState>({
+    fullName: "Ramesh Kadam",
+    phone: "9833445566",
+    autoNumber: "MH 08 CD 9012",
+    dlNumber: "MH08 20230014789",
+    dlUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
+    rcUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+    aadhaarNumber: "5674 8923 1045",
+    aadhaarUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80",
+    aadhaarVerified: true,
+    status: "pending",
+  });
 
   // Real Auth state (User-driven, no forced hardcoded names)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
@@ -148,6 +202,13 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     trips: [],
   });
   const [activeRideId, setActiveRideId] = useState<string | null>(null);
+
+  // Language toggle
+  const toggleLanguage = () => {
+    const nextLang = currentLanguage.startsWith("mr") ? "en" : "mr";
+    i18n.changeLanguage(nextLang);
+    setCurrentLanguage(nextLang);
+  };
 
   // Load Real Database data on mount
   const refreshRealData = async () => {
@@ -220,6 +281,141 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  // Driver Registration with Documents (DL, RC, Aadhaar)
+  const registerDriverWithDocs = async (data: {
+    fullName: string;
+    phone: string;
+    autoNumber: string;
+    dlNumber: string;
+    dlUrl?: string;
+    rcUrl?: string;
+    aadhaarNumber: string;
+    aadhaarUrl?: string;
+  }): Promise<boolean> => {
+    const aadhaarCheck = validateAadhaar(data.aadhaarNumber);
+
+    const newDocs: DriverDocsState = {
+      fullName: data.fullName,
+      phone: data.phone,
+      autoNumber: data.autoNumber.toUpperCase(),
+      dlNumber: data.dlNumber.toUpperCase(),
+      dlUrl: data.dlUrl || "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
+      rcUrl: data.rcUrl || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+      aadhaarNumber: data.aadhaarNumber,
+      aadhaarUrl: data.aadhaarUrl || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80",
+      aadhaarVerified: aadhaarCheck.isValid,
+      status: "pending",
+    };
+
+    setDriverDocs(newDocs);
+
+    // Also persist into Demo DB so Admin panel immediately lists this driver
+    const db = getDemoDB();
+    const driverId = "driver-" + Date.now();
+    db.profiles.push({
+      id: driverId,
+      role: "driver",
+      full_name: data.fullName,
+      phone: data.phone,
+      language: "mr",
+      is_blocked: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    db.drivers.push({
+      profile_id: driverId,
+      auto_number: data.autoNumber.toUpperCase(),
+      seat_capacity: 3,
+      dl_number: data.dlNumber.toUpperCase(),
+      licence_url: newDocs.dlUrl,
+      rc_url: newDocs.rcUrl,
+      aadhaar_number: data.aadhaarNumber,
+      aadhaar_url: newDocs.aadhaarUrl,
+      status: "pending",
+      is_online: false,
+      queue_position: db.drivers.length + 1,
+      consecutive_declines: 0,
+      rating_avg: 5.0,
+      rating_count: 0,
+      total_trips: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    saveDemoDB(db);
+
+    // Update active trip driver details
+    setTrip((prev) => ({
+      ...prev,
+      driverName: data.fullName,
+      driverAuto: `${data.autoNumber.toUpperCase()} • Bajaj RE`,
+    }));
+
+    // Auto login as newly registered driver
+    await loginWithPhoneOtp(data.phone, "123456", "driver", data.fullName);
+    return true;
+  };
+
+  // Admin Driver Actions
+  const adminApproveDriver = (profileId: string) => {
+    const db = getDemoDB();
+    const d = db.drivers.find((item) => item.profile_id === profileId);
+    if (d) {
+      d.status = "approved";
+      d.rejection_reason = undefined;
+      saveDemoDB(db);
+    }
+    if (driverDocs.phone && (profileId.includes("driver") || profileId === "driver-3")) {
+      setDriverDocs((prev) => ({ ...prev, status: "approved" }));
+    }
+  };
+
+  const adminRejectDriver = (profileId: string, reason?: string) => {
+    const db = getDemoDB();
+    const d = db.drivers.find((item) => item.profile_id === profileId);
+    if (d) {
+      d.status = "rejected";
+      d.rejection_reason = reason || "कागदपत्रे अपूर्ण आहेत.";
+      saveDemoDB(db);
+    }
+    if (driverDocs.phone && (profileId.includes("driver") || profileId === "driver-3")) {
+      setDriverDocs((prev) => ({ ...prev, status: "rejected" }));
+    }
+  };
+
+  const adminSuspendDriver = (profileId: string) => {
+    const db = getDemoDB();
+    const d = db.drivers.find((item) => item.profile_id === profileId);
+    if (d) {
+      d.status = d.status === "suspended" ? "approved" : "suspended";
+      d.is_online = false;
+      saveDemoDB(db);
+    }
+  };
+
+  // Admin Login
+  const loginAdmin = async (passcodeOrPassword: string): Promise<boolean> => {
+    setAuthLoading(true);
+    setAuthError(null);
+    const clean = passcodeOrPassword.trim().toLowerCase();
+    if (clean === "admin123" || clean === "1234" || clean === "admin" || clean === "git2026") {
+      const adminObj: UserProfile = {
+        id: "admin-1",
+        email: "admin@ridemitra.com",
+        fullName: "प्रा. जोशी सर (GIT Admin)",
+        role: "admin",
+      };
+      setCurrentUser(adminObj);
+      localStorage.setItem("ride_mitra_auth_user", JSON.stringify(adminObj));
+      setAuthLoading(false);
+      setFlow("admin");
+      setAdminScreen(2);
+      return true;
+    }
+    setAuthError("अवैध Admin पासवर्ड (Valid passwords: admin123 / 1234)");
+    setAuthLoading(false);
+    return false;
+  };
+
   // Sync Supabase Auth session on mount
   useEffect(() => {
     const checkSession = async () => {
@@ -255,10 +451,15 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // Real Supabase Email Login
-  const loginWithEmail = async (email: string, pass: string, role: "student" | "driver"): Promise<boolean> => {
+  const loginWithEmail = async (email: string, pass: string, role: "student" | "driver" | "admin"): Promise<boolean> => {
     setAuthLoading(true);
     setAuthError(null);
     try {
+      // If admin email
+      if (role === "admin" || email.toLowerCase().includes("admin")) {
+        return await loginAdmin(pass);
+      }
+
       // 1. Try Supabase Auth sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -389,10 +590,9 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     try {
       const formatted = phone.startsWith("+91") ? phone : `+91${phone.replace(/\D/g, "")}`;
-      // Send OTP via Supabase if SMS provider exists
       await supabase.auth.signInWithOtp({ phone: formatted });
     } catch {
-      // In development / free Supabase without Twilio, proceed seamlessly
+      // In development / local presentation, proceed seamlessly
     }
     return { success: true, message: "ओटीपी पाठवला आहे! (OTP: 123456)" };
   };
@@ -402,7 +602,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setAuthLoading(true);
     setAuthError(null);
     try {
-      // Allow valid 6-digit OTP or standard 123456 code
+      // Allow valid OTP or standard 123456
       const cleanOtp = otp ? otp.trim() : "";
       if (cleanOtp.length >= 4 || cleanOtp === "123456" || cleanOtp === "") {
         const userFullName = fullName && fullName.trim().length > 0 ? fullName : (role === "student" ? "Student" : "Auto Driver");
@@ -440,7 +640,8 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCurrentUser(null);
     localStorage.removeItem("ride_mitra_auth_user");
     if (flow === "student") setStudentScreen(1);
-    else setDriverScreen(1);
+    else if (flow === "driver") setDriverScreen(1);
+    else setAdminScreen(1);
   };
 
   return (
@@ -452,6 +653,8 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setStudentScreen,
         driverScreen,
         setDriverScreen,
+        adminScreen,
+        setAdminScreen,
         driverOnline,
         setDriverOnline,
         driverOnTripStep,
@@ -481,6 +684,18 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         submitRatingAction,
         submitSosAction,
         refreshRealData,
+        // Driver docs & verification
+        driverDocs,
+        registerDriverWithDocs,
+        // Admin
+        loginAdmin,
+        adminApproveDriver,
+        adminRejectDriver,
+        adminSuspendDriver,
+        // Language
+        currentLanguage,
+        toggleLanguage,
+        // Real Auth
         currentUser,
         authLoading,
         authError,

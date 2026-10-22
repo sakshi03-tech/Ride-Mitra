@@ -48,6 +48,11 @@ export const AdminDashboardPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectionModalDriverId, setRejectionModalDriverId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [previewDoc, setPreviewDoc] = useState<{
+    title: string;
+    url: string;
+    number?: string;
+  } | null>(null);
 
   const refreshData = () => {
     setDb(getDemoDB());
@@ -464,6 +469,66 @@ export const AdminDashboardPage: React.FC = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Driver Documents Row */}
+                    <div className="mt-3 pt-3 border-t grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold block text-[11px]">🪪 आधार कार्ड</span>
+                          <span className="font-mono text-muted-foreground text-[10px]">{drv.aadhaar_number || "3675 9834 6012"}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs text-blue-600 hover:text-blue-700"
+                          onClick={() => setPreviewDoc({
+                            title: "Aadhaar Card",
+                            url: drv.aadhaar_url || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80",
+                            number: drv.aadhaar_number || "3675 9834 6012"
+                          })}
+                        >
+                          पाहा
+                        </Button>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold block text-[11px]">📜 ड्रायव्हिंग लायसन्स</span>
+                          <span className="font-mono text-muted-foreground text-[10px]">{drv.dl_number || "MH08 20210012345"}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs text-blue-600 hover:text-blue-700"
+                          onClick={() => setPreviewDoc({
+                            title: "Driving Licence",
+                            url: drv.licence_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80",
+                            number: drv.dl_number || "MH08 20210012345"
+                          })}
+                        >
+                          पाहा
+                        </Button>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold block text-[11px]">📑 वाहन आरसी</span>
+                          <span className="font-mono text-muted-foreground text-[10px]">{drv.auto_number}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs text-blue-600 hover:text-blue-700"
+                          onClick={() => setPreviewDoc({
+                            title: "Vehicle RC",
+                            url: drv.rc_url || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
+                            number: drv.auto_number
+                          })}
+                        >
+                          पाहा
+                        </Button>
+                      </div>
+                    </div>
                   </Card>
                 );
               })}
@@ -774,6 +839,42 @@ export const AdminDashboardPage: React.FC = () => {
                 नाकारा
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-background rounded-3xl max-w-md w-full p-6 border-2 border-border shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="font-extrabold text-base">{previewDoc.title}</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewDoc(null)}
+                className="rounded-full w-8 h-8 p-0"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="space-y-3">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-muted border">
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="text-xs font-mono font-bold">
+                क्रमांक / Number: <span className="text-foreground">{previewDoc.number}</span>
+              </p>
+            </div>
+            <Button
+              className="w-full rounded-xl font-bold"
+              onClick={() => setPreviewDoc(null)}
+            >
+              बंद करा (Close)
+            </Button>
           </div>
         </div>
       )}
