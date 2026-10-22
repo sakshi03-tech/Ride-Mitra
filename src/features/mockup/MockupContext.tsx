@@ -41,6 +41,18 @@ export interface DriverDocsState {
   status: "pending" | "approved" | "rejected" | "suspended";
 }
 
+export interface AvailableDriver {
+  id: string;
+  name: string;
+  phone: string;
+  rating: number;
+  time: string;
+  auto: string;
+  photo: string;
+  isOnline: boolean;
+  status: "approved" | "pending" | "rejected" | "suspended";
+}
+
 export interface TripData {
   pickup: string;
   drop: string;
@@ -88,6 +100,7 @@ interface MockupContextType {
   realStops: RealStop[];
   realFares: RealFare[];
   realRidesHistory: RealRide[];
+  realDrivers: AvailableDriver[];
   driverEarningsSummary: { totalAmount: number; tripsCount: number; trips: Array<{ route: string; fare: string; time: string; status: string }> };
   activeRideId: string | null;
   bookRealRide: () => Promise<boolean>;
@@ -199,6 +212,35 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [realStops, setRealStops] = useState<RealStop[]>([]);
   const [realFares, setRealFares] = useState<RealFare[]>([]);
   const [realRidesHistory, setRealRidesHistory] = useState<RealRide[]>([]);
+
+  // Helper to extract real drivers from DemoDB / Supabase
+  const getLoadedDrivers = (): AvailableDriver[] => {
+    const db = getDemoDB();
+    return db.drivers.map((d, index) => {
+      const prof = db.profiles.find((p) => p.id === d.profile_id);
+      return {
+        id: d.profile_id,
+        name: prof?.full_name || "Auto Driver",
+        phone: prof?.phone || "9833445566",
+        rating: d.rating_avg || 4.8,
+        time: `${(index + 1) * 2} mins away`,
+        auto: d.auto_number,
+        photo: d.licence_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
+        isOnline: d.is_online,
+        status: d.status,
+      };
+    });
+  };
+
+  const [realDrivers, setRealDrivers] = useState<AvailableDriver[]>(getLoadedDrivers);
+
+  useEffect(() => {
+    const handleDbSync = () => {
+      setRealDrivers(getLoadedDrivers());
+    };
+    window.addEventListener("storage_db_updated", handleDbSync);
+    return () => window.removeEventListener("storage_db_updated", handleDbSync);
+  }, []);
   const [driverEarningsSummary, setDriverEarningsSummary] = useState<{
     totalAmount: number;
     tripsCount: number;
@@ -381,6 +423,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updated_at: new Date().toISOString(),
     });
     saveDemoDB(db);
+    setRealDrivers(getLoadedDrivers());
 
     // Update active trip driver details
     setTrip((prev) => ({
@@ -406,6 +449,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (driverDocs.phone && (profileId.includes("driver") || profileId === "driver-3")) {
       setDriverDocs((prev) => ({ ...prev, status: "approved" }));
     }
+    setRealDrivers(getLoadedDrivers());
   };
 
   const adminRejectDriver = (profileId: string, reason?: string) => {
@@ -419,6 +463,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (driverDocs.phone && (profileId.includes("driver") || profileId === "driver-3")) {
       setDriverDocs((prev) => ({ ...prev, status: "rejected" }));
     }
+    setRealDrivers(getLoadedDrivers());
   };
 
   const adminSuspendDriver = (profileId: string) => {
@@ -429,6 +474,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       d.is_online = false;
       saveDemoDB(db);
     }
+    setRealDrivers(getLoadedDrivers());
   };
 
   // Admin Login
@@ -758,6 +804,7 @@ export const MockupProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         realStops,
         realFares,
         realRidesHistory,
+        realDrivers,
         driverEarningsSummary,
         activeRideId,
         bookRealRide,

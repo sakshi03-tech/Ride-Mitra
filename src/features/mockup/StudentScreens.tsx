@@ -58,6 +58,7 @@ export const StudentScreens: React.FC = () => {
     realStops,
     realFares,
     realRidesHistory,
+    realDrivers,
     bookRealRide,
     submitRatingAction,
     submitSosAction,
@@ -430,7 +431,7 @@ export const StudentScreens: React.FC = () => {
                   className="w-full h-12 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-center text-xl font-mono font-black tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-[11px] text-zinc-400 mt-1">
-                  तुमच्या SMS मधील ६ अंकी कोड टाका (उदा. वरील सूचना पहा)
+                  {tText("मोबाईलवर आलेला ६ अंकी ओटीपी कोड टाका", "Enter the 6-digit verification code")}
                 </p>
               </div>
 
@@ -622,17 +623,20 @@ export const StudentScreens: React.FC = () => {
    * SCREEN 4: AVAILABLE AUTOS
    * ========================================================================= */
   if (studentScreen === 4) {
+    const activeDrivers = realDrivers.filter((d) => d.status === "approved" || d.isOnline);
+    const displayDrivers = activeDrivers.length > 0 ? activeDrivers : realDrivers;
+
     return (
       <div className="flex-1 flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
         {/* Header */}
         <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <button
             onClick={() => setStudentScreen(3)}
-            className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
+            className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h3 className="font-black text-sm">Available Autos</h3>
+          <h3 className="font-black text-sm">{tText("उपलब्ध रिक्षा (Available Autos)", "Available Autos")}</h3>
           <div className="w-8" />
         </div>
 
@@ -645,7 +649,7 @@ export const StudentScreens: React.FC = () => {
                 availableView === "map" ? "bg-blue-600 text-white shadow" : "text-zinc-500"
               }`}
             >
-              Map
+              {tText("नकाशा (Map)", "Map")}
             </button>
             <button
               onClick={() => setAvailableView("list")}
@@ -653,48 +657,39 @@ export const StudentScreens: React.FC = () => {
                 availableView === "list" ? "bg-blue-600 text-white shadow" : "text-zinc-500"
               }`}
             >
-              List
+              {tText("यादी (List)", "List")}
             </button>
           </div>
         </div>
 
         {/* Map View */}
-        <MockupMap autoPosition="pickup" pillText="3 autos nearby • 2 mins away" className="h-52" />
+        <MockupMap
+          autoPosition="pickup"
+          pillText={`${displayDrivers.length} ${tText("रिक्षा उपलब्ध • २ मिनिटांत", "autos nearby • 2 mins away")}`}
+          className="h-52"
+        />
 
         {/* Driver List */}
         <div className="flex-1 p-4 space-y-2.5 overflow-y-auto">
-          {[
-            {
-              name: "Suresh Patil",
-              rating: 4.8,
-              time: "2 mins away",
-              auto: "MH 08 AB 1234",
-              photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
-            },
-            {
-              name: "Prakash Mane",
-              rating: 4.6,
-              time: "3 mins away",
-              auto: "MH 08 BF 5678",
-              photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
-            },
-            {
-              name: "Ramesh Jadhav",
-              rating: 4.7,
-              time: "5 mins away",
-              auto: "MH 08 CK 9012",
-              photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
-            },
-          ].map((driver, i) => (
+          {displayDrivers.map((driver) => (
             <div
-              key={i}
-              className="p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm"
+              key={driver.id}
+              className="p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm hover:border-blue-500 transition"
             >
               <div className="flex items-center gap-3">
-                <img src={driver.photo} alt={driver.name} className="w-11 h-11 rounded-full object-cover border" />
+                <img
+                  src={driver.photo}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-11 h-11 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
+                />
                 <div>
-                  <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">{driver.name}</h4>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
+                  <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100">
+                    {driver.name}
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                    <span className="font-mono text-zinc-600 dark:text-zinc-400 font-bold">{driver.auto}</span>
+                    <span>•</span>
                     <span>{driver.time}</span>
                     <span className="flex items-center gap-0.5 text-amber-500 font-bold">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {driver.rating}
@@ -708,15 +703,16 @@ export const StudentScreens: React.FC = () => {
                   setTrip((prev) => ({
                     ...prev,
                     driverName: driver.name,
+                    driverPhone: driver.phone,
                     driverRating: driver.rating,
                     driverAuto: driver.auto,
                     driverPhoto: driver.photo,
                   }));
                   setStudentScreen(5);
                 }}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm transition active:scale-[0.98]"
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs shadow-sm transition active:scale-[0.98]"
               >
-                Book
+                {tText("बुक करा (Book)", "Book")}
               </button>
             </div>
           ))}
@@ -1332,7 +1328,7 @@ export const StudentScreens: React.FC = () => {
                       🛺
                     </span>
                     <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                      {item.driver_name || "Suresh Patil"}
+                      {item.driver_name || tText("रिक्षा चालक", "Auto Driver")}
                     </span>
                     <span className="text-[10px] text-amber-500 font-bold">★ 4.8</span>
                   </div>

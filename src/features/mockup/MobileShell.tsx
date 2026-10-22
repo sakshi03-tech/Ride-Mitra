@@ -50,38 +50,6 @@ export const MobileShell: React.FC<MobileShellProps> = ({
 
       {/* Main App Container (Natural Mobile Screen - No Fake Phone Bezel) */}
       <div className="w-full max-w-md min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 flex flex-col shadow-2xl relative overflow-x-hidden">
-        {/* Real Mobile SMS Notification Alert */}
-        {useMockup().smsNotification && (
-          <div className="fixed top-2 left-1/2 -translate-x-1/2 w-11/12 max-w-sm z-50 p-3.5 rounded-2xl bg-zinc-900/95 text-white border-2 border-amber-400 shadow-2xl backdrop-blur-md animate-in slide-in-from-top-4 duration-300">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-amber-400 text-black flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  💬
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs text-amber-400">संदेश (SMS Alert)</span>
-                    <span className="text-[10px] text-zinc-400">{useMockup().smsNotification?.time}</span>
-                  </div>
-                  <p className="text-xs text-zinc-200 mt-0.5">
-                    Ride Mitra पडताळणी कोड:{" "}
-                    <span className="font-mono text-base font-black text-amber-300 tracking-wider">
-                      {useMockup().smsNotification?.code}
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">हा कोड कोणाशीही शेअर करू नका.</p>
-                </div>
-              </div>
-              <button
-                onClick={useMockup().dismissSmsNotification}
-                className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center text-xs flex-shrink-0"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Screen Content */}
         <div className="flex-1 flex flex-col relative bg-zinc-50 dark:bg-zinc-950">
           {children}
